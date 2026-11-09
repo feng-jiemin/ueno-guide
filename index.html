@@ -51,6 +51,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 .brand svg,.brand img{flex:none}
 .brand-word{display:grid;line-height:1}
 .brand-word b{font-family:"Zen Kaku Gothic New",var(--f-body);font-weight:900;font-size:22px;letter-spacing:.01em;color:var(--ink)}
+.demo-tag{font-family:var(--f-body);font-size:12px;font-weight:700;letter-spacing:0;color:var(--sakura-deep);margin-left:2px;vertical-align:middle}
 .brand-word small{font-family:var(--f-body);font-weight:700;font-size:10.5px;letter-spacing:.32em;color:var(--muted);margin-top:3px}
 nav.main{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
 nav.main a{padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:500;white-space:nowrap;font-size:14px}
@@ -193,6 +194,20 @@ textarea#p-extra{width:100%;border:1px solid var(--line);border-radius:10px;back
 .plan-out .map-box{position:static;margin:14px 0}
 .status{font-size:13.5px;color:var(--muted)}
 
+/* mascot launcher (replaces the small default GBase button) */
+#gptbase-bubble-button{opacity:0!important;pointer-events:none!important}
+#gptbase-message-bubbles{display:none!important}
+@media (min-width:640px){#gptbase-bubble-window{right:150px!important;bottom:20px!important;top:auto!important;width:370px!important;height:min(560px,calc(100dvh - 40px))!important}}
+.m-tip{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));z-index:999999991;width:min(260px,calc(100vw - 28px));background:#fff;color:#24203a;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6;box-shadow:0 10px 26px rgba(60,20,60,.22)}
+.mascot{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:999999990;border:0;background:none;padding:0;cursor:pointer;display:grid;justify-items:center;-webkit-tap-highlight-color:transparent}
+.mascot .m-img{width:118px;height:auto;display:block;filter:drop-shadow(0 6px 10px rgba(60,20,60,.25));animation:m-hop 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.mascot:hover .m-img{animation:m-hop .9s ease-in-out infinite}
+@keyframes m-hop{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-6px) rotate(-4deg)}40%{transform:translateY(0) rotate(0)}60%{transform:translateY(-4px) rotate(4deg)}80%{transform:translateY(0) rotate(0)}}
+.mascot .say{position:relative;background:#fff;color:#24203a;font-size:13px;font-weight:700;padding:7px 12px;border-radius:14px;box-shadow:0 6px 18px rgba(60,20,60,.18);white-space:nowrap;margin-bottom:2px;animation:say-pop 3.2s ease-in-out infinite}
+.mascot .say::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+@keyframes say-pop{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@media (max-width:640px){.mascot .m-img{width:86px}.mascot .say{font-size:12px;padding:5px 10px}}
+@media (prefers-reduced-motion:reduce){.mascot .m-img,.mascot .say{animation:none}}
 footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--muted);font-size:12.5px}
 footer details summary{cursor:pointer;font-weight:700;color:var(--ink)}
 footer ul{padding-left:18px;margin:8px 0 0}
@@ -205,7 +220,7 @@ footer ul{padding-left:18px;margin:8px 0 0}
   <div class="wrap">
     <a class="brand" href="#home" aria-label="GBase Support - 上野散歩 AI Guide">
       <img src="img/gbase-logo.svg" width="36" height="36" alt="">
-      <span class="brand-word"><b>GBase</b><small>SUPPORT</small></span>
+      <span class="brand-word"><b>GBase<span class="demo-tag">（研修用デモ）</span></b><small>SUPPORT</small></span>
     </a>
     <nav class="main" aria-label="Main">
       <a href="#home"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg><span data-k="nav_home"></span></a>
@@ -336,6 +351,11 @@ footer ul{padding-left:18px;margin:8px 0 0}
     </div>
   </section>
 </main>
+
+<button type="button" class="mascot" id="mascot" aria-label="AI Guide">
+  <span class="say" data-k="mascot_say"></span>
+  <img class="m-img" src="img/mascot.png" width="428" height="486" alt="">
+</button>
 
 <footer>
   <div class="wrap">
@@ -491,7 +511,7 @@ const CREDITS = [
 
 /* ---------- UI strings ---------- */
 const T = {
- ja:{nav_home:"ホーム",hero_cta:"上野を散歩してみる",rec_routes:"おすすめ散歩コース",more:"もっと見る",user_photos:"ホーム背景はAI生成のイメージ画像です。上野公園の桜並木、東京国立博物館、アメ横、不忍池の写真：プロジェクト提供素材（公開前に利用許諾を確認）",nav_spots:"スポット",nav_routes:"散歩コース",nav_food:"グルメ・休憩",nav_ai:"AIガイド",
+ ja:{nav_home:"ホーム",m_loading:"AIチャットを準備中です。少し待ってからもう一度タップしてください。（AIチャットは公開サイトでのみ動作します）",mascot_say:"AIガイドに聞いてね！",hero_cta:"上野を散歩してみる",rec_routes:"おすすめ散歩コース",more:"もっと見る",user_photos:"ホーム背景はAI生成のイメージ画像です。上野公園の桜並木、東京国立博物館、アメ横、不忍池の写真：プロジェクト提供素材（公開前に利用許諾を確認）",nav_spots:"スポット",nav_routes:"散歩コース",nav_food:"グルメ・休憩",nav_ai:"AIガイド",
   tagline:"東京・上野をもっと楽しく、もっと便利に",search_ph:"上野のおすすめスポットを教えてください…",
   tile_ai:"AIチャット",tile_ai_s:"質問する",tile_routes:"散歩コース",tile_routes_s:"ルートを見る",tile_spots:"おすすめスポット",tile_spots_s:"人気の場所",tile_food:"グルメ・休憩",tile_food_s:"食べる・休む",tile_plan:"マイプラン",tile_plan_s:"AIが計画",
   season_eye:"Season",season_h:"いまの上野の見どころ",now:"いまの季節",pop_eye:"Popular",pop_h:"人気スポット",see_all:"すべて見る",
@@ -508,8 +528,8 @@ const T = {
   thinking:"考えています…",
   disclaimer:"AIの回答とモデルコースは参考情報です。営業時間・休館日・料金・開花時期・混雑は変わることがあるため、お出かけ前に公式情報を確認してください。",
   foot_note:"上野散歩 AI Guide（PoC）。施設情報は基礎ナレッジ UENO-KB-001 にもとづきます。",credits_h:"写真クレジット",
-  e_unavail:"AIチャットは画面右下のチャットボタン（GBase）からご利用ください。",e_denied:"AIの利用が許可されていません。",e_rate:"リクエストが多すぎます。少し待ってからもう一度お試しください。",e_generic:"うまく回答できませんでした。もう一度お試しください。",e_plan:"コースを作れませんでした。条件を変えてもう一度お試しください。"},
- zh:{nav_home:"首页",hero_cta:"去上野散步吧",rec_routes:"推荐散步路线",more:"查看更多",user_photos:"首页背景为 AI 生成的示意图。上野公园樱花大道、东京国立博物馆、阿美横、不忍池照片：项目提供素材（公开前请确认使用授权）",nav_spots:"景点",nav_routes:"散步路线",nav_food:"美食与休息",nav_ai:"AI 向导",
+  e_unavail:"右下の着物の女の子（GBase AIガイド）のチャット画面を開きました。そちらで質問してください。",e_denied:"AIの利用が許可されていません。",e_rate:"リクエストが多すぎます。少し待ってからもう一度お試しください。",e_generic:"うまく回答できませんでした。もう一度お試しください。",e_plan:"コースを作れませんでした。条件を変えてもう一度お試しください。"},
+ zh:{nav_home:"首页",m_loading:"AI 聊天正在加载，请稍后再点一次。（AI 聊天只在正式网站上可用）",mascot_say:"有问题就问我吧！",hero_cta:"去上野散步吧",rec_routes:"推荐散步路线",more:"查看更多",user_photos:"首页背景为 AI 生成的示意图。上野公园樱花大道、东京国立博物馆、阿美横、不忍池照片：项目提供素材（公开前请确认使用授权）",nav_spots:"景点",nav_routes:"散步路线",nav_food:"美食与休息",nav_ai:"AI 向导",
   tagline:"让东京・上野之旅更有趣、更便利",search_ph:"请推荐上野值得去的景点…",
   tile_ai:"AI 聊天",tile_ai_s:"随时提问",tile_routes:"散步路线",tile_routes_s:"查看路线",tile_spots:"推荐景点",tile_spots_s:"热门地点",tile_food:"美食休息",tile_food_s:"吃饭・歇脚",tile_plan:"我的行程",tile_plan_s:"AI 规划",
   season_eye:"Season",season_h:"当季上野看点",now:"当前季节",pop_eye:"Popular",pop_h:"热门景点",see_all:"查看全部",
@@ -526,8 +546,8 @@ const T = {
   thinking:"思考中…",
   disclaimer:"AI 回答与示范路线仅供参考。营业时间、休馆日、票价、花期和人流可能变化，出发前请查看官方最新信息。",
   foot_note:"上野散步 AI Guide（PoC）。设施信息依据基础知识库 UENO-KB-001。",credits_h:"照片来源",
-  e_unavail:"请点击页面右下角的聊天按钮（GBase）向 AI 提问。",e_denied:"AI 功能未获授权。",e_rate:"请求过于频繁，请稍后再试。",e_generic:"暂时无法回答，请再试一次。",e_plan:"未能生成路线，请调整条件后再试。"},
- en:{nav_home:"Home",hero_cta:"Start your Ueno walk",rec_routes:"Recommended walks",more:"See more",user_photos:"The home background is an AI-generated illustration. Ueno Park cherry avenue, Tokyo National Museum, Ameyoko and Shinobazu Pond photos: project-supplied (confirm usage rights before publishing)",nav_spots:"Spots",nav_routes:"Walk Routes",nav_food:"Food & Rest",nav_ai:"AI Guide",
+  e_unavail:"已为你打开右下角和服小姑娘（GBase AI 向导）的聊天窗口，请在那里提问。",e_denied:"AI 功能未获授权。",e_rate:"请求过于频繁，请稍后再试。",e_generic:"暂时无法回答，请再试一次。",e_plan:"未能生成路线，请调整条件后再试。"},
+ en:{nav_home:"Home",m_loading:"The AI chat is still loading. Tap again in a moment. (The chat only works on the published site.)",mascot_say:"Ask me about Ueno!",hero_cta:"Start your Ueno walk",rec_routes:"Recommended walks",more:"See more",user_photos:"The home background is an AI-generated illustration. Ueno Park cherry avenue, Tokyo National Museum, Ameyoko and Shinobazu Pond photos: project-supplied (confirm usage rights before publishing)",nav_spots:"Spots",nav_routes:"Walk Routes",nav_food:"Food & Rest",nav_ai:"AI Guide",
   tagline:"Explore Ueno, Tokyo: more fun, less hassle",search_ph:"Which places in Ueno do you recommend?",
   tile_ai:"AI Chat",tile_ai_s:"Ask anything",tile_routes:"Walk Routes",tile_routes_s:"See routes",tile_spots:"Top Spots",tile_spots_s:"Popular places",tile_food:"Food & Rest",tile_food_s:"Eat, take a break",tile_plan:"My Plan",tile_plan_s:"AI planner",
   season_eye:"Season",season_h:"What to see in Ueno now",now:"Now",pop_eye:"Popular",pop_h:"Popular spots",see_all:"See all",
@@ -544,7 +564,7 @@ const T = {
   thinking:"Thinking…",
   disclaimer:"AI answers and sample routes are for reference. Hours, closing days, fees, bloom dates and crowds change, so check official information before you go.",
   foot_note:"Ueno Walking AI Guide (PoC). Facility facts follow the knowledge base UENO-KB-001.",credits_h:"Photo credits",
-  e_unavail:"Please use the chat button (GBase) at the bottom right to ask the AI.",e_denied:"AI use hasn't been allowed for this page.",e_rate:"Too many requests. Wait a moment and try again.",e_generic:"Couldn't get an answer. Please try again.",e_plan:"Couldn't build a route. Change the options and try again."}
+  e_unavail:"The chat with the kimono guide (GBase AI) at the bottom right is now open. Ask your question there.",e_denied:"AI use hasn't been allowed for this page.",e_rate:"Too many requests. Wait a moment and try again.",e_generic:"Couldn't get an answer. Please try again.",e_plan:"Couldn't build a route. Change the options and try again."}
 };
 const OPTS = {
  time:{type:"radio",vals:[["60",{ja:"1時間",zh:"1 小时",en:"1 hour"}],["120",{ja:"2時間",zh:"2 小时",en:"2 hours"}],["180",{ja:"半日（3時間）",zh:"半日（3 小时）",en:"Half day (3 h)"}],["300",{ja:"1日",zh:"1 天",en:"Full day"}]],def:"120"},
@@ -738,10 +758,20 @@ document.addEventListener("click", e => {
   const rb = e.target.closest("#route-tabs button"); if (rb) { routeSel = rb.dataset.r; renderRoutes(); }
   const hr = e.target.closest("[data-route]"); if (hr) { routeSel = hr.dataset.route; renderRoutes(); }
   const qb = e.target.closest("#quick button"); if (qb) ask(qb.textContent);
+  if (e.target.closest("#mascot")) openGBase();
   const as = e.target.closest("[data-askspot]");
   if (as) { const s = byId(as.dataset.askspot); pendingScroll = "chat"; setTimeout(() => ask({ja:`${L(s.name)}の見どころと楽しみ方を教えてください。`,zh:`请介绍${L(s.name)}的看点和游览建议。`,en:`What should I know about ${L(s.name)}?`}[lang]), 60); }
 });
 
+function openGBase(){
+  const b = document.getElementById("gptbase-bubble-button");
+  if (b) { b.click(); return true; }
+  let tip = document.getElementById("m-tip");
+  if (!tip) { tip = document.createElement("div"); tip.id = "m-tip"; tip.className = "m-tip"; tip.setAttribute("role", "status"); document.body.appendChild(tip); }
+  tip.textContent = t("m_loading"); tip.hidden = false;
+  clearTimeout(openGBase.timer); openGBase.timer = setTimeout(() => { tip.hidden = true; }, 5000);
+  return false;
+}
 /* ---------- AI ---------- */
 /* Standalone build: no Claude runtime. Chat is handled by the GBase widget (see the slot before </body>); the planner uses the built-in rules in localPlan(). */
 let samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(() => null) : Promise.resolve(null);
@@ -763,7 +793,7 @@ async function ask(q){
   chatStarted = true; addMsg("user", q);
   const bubble = addMsg("bot", t("thinking"));
   const sample = await samplePromise;
-  if (!sample || aiDead) { bubble.textContent = t("e_unavail"); bubble.classList.add("err"); return; }
+  if (!sample || aiDead) { bubble.textContent = t("e_unavail"); openGBase(); return; }
   busy = true; setChatBusy(true);
   turns.push({role:"user", content:q});
   const rules = `你是「上野散步 AI Guide」的导游助手。根据下面的知识库回答游客问题。\n- 用游客这一条消息所用的语言回答（日语、中文或英语）。网站当前界面语言：${LANG_NAME[lang]}。\n- 简洁、友好、具体，一般不超过 8 行；可用「・」列点；不要用 Markdown 标题或粗体。\n- 只依据知识库；没有依据的要说明无法确认，不要编造营业时间、票价或店名。\n- 动态信息（营业时间、休馆日、票价、花期、天气、拥挤）提醒以官方最新信息为准。\n- 规划路线时考虑时间、兴趣、同行人员、步行能力，并提示可在本网站「AI 向导」用规划器生成地图路线。\n\n${KB}`;
