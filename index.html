@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>上野散步 AI Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: travel-site shell — sticky header, photo hero with AI search, then one view per hash (#home #spots #routes #food #ai) */
+:root{
+  --bg:#fbf8fa; --surface:#ffffff; --surface-2:#f5f0f6; --ink:#24203a; --muted:#6c6680; --line:#ebe4ee;
+  --accent:#4a3fd1; --accent-2:#6d5cf0; --accent-ink:#ffffff; --accent-soft:#ecebff;
+  --sakura:#f6d3e1; --sakura-deep:#d2507f; --moss:#d9ecd9; --moss-line:#8cbf93; --water:#bfe0ee; --water-line:#7fb6cf; --rail:#8a8496;
+  --shadow:0 10px 30px rgba(52,36,92,.10);
+  --f-display:"Zen Kaku Gothic New","Noto Sans JP","Noto Sans SC",system-ui,sans-serif;
+  --f-body:"Noto Sans JP","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14121c; --surface:#1e1b29; --surface-2:#252133; --ink:#f1eef8; --muted:#aaa4bd; --line:#312c42;
+  --accent:#9d94ff; --accent-2:#b4acff; --accent-ink:#17142a; --accent-soft:#2a2650;
+  --sakura:#4a2738; --sakura-deep:#f08cb4; --moss:#1f3326; --moss-line:#4f8d5f; --water:#1c3b4c; --water-line:#3f7e9c; --rail:#7d7790;
+  --shadow:0 10px 30px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14121c; --surface:#1e1b29; --surface-2:#252133; --ink:#f1eef8; --muted:#aaa4bd; --line:#312c42;
+  --accent:#9d94ff; --accent-2:#b4acff; --accent-ink:#17142a; --accent-soft:#2a2650;
+  --sakura:#4a2738; --sakura-deep:#f08cb4; --moss:#1f3326; --moss-line:#4f8d5f; --water:#1c3b4c; --water-line:#3f7e9c; --rail:#7d7790;
+  --shadow:0 10px 30px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.3;margin:0}
+h2{font-size:clamp(22px,3vw,30px);font-weight:900}
+h3{font-size:17px;font-weight:700}
+.lead{color:var(--muted);max-width:62ch;margin:.4em 0 0}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--sakura-deep);font-weight:700}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:16px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:var(--f-display);font-weight:900;font-size:18px;white-space:nowrap}
+.brand svg,.brand img{flex:none}
+.brand-word{display:grid;line-height:1}
+.brand-word b{font-family:"Zen Kaku Gothic New",var(--f-body);font-weight:900;font-size:22px;letter-spacing:.01em;color:var(--ink)}
+.brand-word small{font-family:var(--f-body);font-weight:700;font-size:10.5px;letter-spacing:.32em;color:var(--muted);margin-top:3px}
+nav.main{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav.main a{padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:500;white-space:nowrap;font-size:14px}
+nav.main a[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px;flex:none}
+.lang button{border:0;background:none;padding:4px 10px;border-radius:999px;cursor:pointer;font-size:13px;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+@media (max-width:820px){
+  .top .wrap{flex-wrap:wrap;gap:8px;padding-block:8px}
+  nav.main{order:3;width:100%;margin-left:0}
+  .lang{margin-left:auto}
+}
+
+/* views */
+.view{padding-block:36px 64px}
+.view[hidden]{display:none}
+#v-home{padding-top:0}
+
+/* hero */
+.hero{position:relative;color:#fff;isolation:isolate}
+.hero-photo{position:relative;min-height:520px;display:flex;align-items:center;overflow:hidden;isolation:isolate}
+.hero-photo img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 45%;z-index:-2;max-width:none}
+.hero-photo::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 55% 42% at 50% 46%,rgba(25,20,70,.42),rgba(25,20,70,0) 72%)}
+.hero-photo .wrap{width:100%;padding-block:64px 150px;display:grid;gap:14px;justify-items:center;text-align:center}
+.hero h1{font-size:clamp(38px,7vw,76px);font-weight:900;color:#fff;text-shadow:0 2px 18px rgba(10,10,40,.55),0 0 3px rgba(10,10,40,.45)}
+.hero .tag{font-size:clamp(16px,2.3vw,22px);font-weight:700;color:#fff;text-shadow:0 1px 10px rgba(10,10,40,.65);margin:0}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;margin-top:10px;background:linear-gradient(90deg,#ff4f8b,#ff7aa6);color:#fff;text-decoration:none;font-weight:700;font-size:17px;padding:14px 30px;border-radius:999px;box-shadow:0 10px 28px rgba(230,50,110,.45);border:2px solid rgba(255,255,255,.75);transition:transform .15s}
+.hero-cta:hover{transform:translateY(-2px)}
+.hero-row{position:relative;margin-top:-110px;z-index:2}
+.hero-row .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.4fr);gap:14px;align-items:stretch}
+.hcard{background:var(--surface);color:var(--ink);border-radius:16px;overflow:hidden;text-decoration:none;box-shadow:0 12px 30px rgba(40,20,80,.16);display:flex;flex-direction:column;min-width:0;transition:transform .15s}
+.hcard:hover{transform:translateY(-3px)}
+.hcard img{width:calc(100% - 16px);margin:8px 8px 0;aspect-ratio:4/3;object-fit:cover;display:block;border-radius:12px}
+.hcard .b{padding:10px 14px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.hcard b{font-family:var(--f-display);font-size:15px;display:flex;align-items:center;gap:6px;min-width:0}
+.hcard small{grid-column:1;color:var(--muted);font-size:12.5px}
+.hcard .go{grid-row:1/3;grid-column:2;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
+.hroutes{background:linear-gradient(180deg,#fff2f7,#ffe1ec);color:#24203a;border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(40,20,80,.16);display:flex;flex-direction:column;gap:8px;min-width:0}
+.hr-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;margin-bottom:2px}
+.hr-head b{font-family:var(--f-display);font-size:15px;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.hr-head a{color:#4a3fd1;font-size:13px;text-decoration:none;font-weight:700;white-space:nowrap}
+.hr-item{display:grid;grid-template-columns:18px auto 1fr;gap:0 8px;align-items:center;background:#fff;border-radius:10px;padding:8px 12px;text-decoration:none;color:#24203a;font-size:14px;font-weight:500}
+.hr-item small{color:#6c6680;font-size:12px;font-weight:400;text-align:right;white-space:nowrap}
+nav.main a{display:inline-flex;align-items:center;gap:6px}
+nav.main a svg{flex:none}
+@media (max-width:1000px){.hero-row .wrap{grid-template-columns:repeat(2,minmax(0,1fr))}.hroutes{grid-column:1/-1}}
+@media (max-width:700px){.hero-photo{min-height:430px}.hero-photo .wrap{padding-block:48px 130px}}
+.section{margin-top:44px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.link-btn{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-weight:700;text-decoration:none}
+
+/* season */
+.seasons{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+.season-now{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.season-now img{width:100%;height:100%;object-fit:cover;min-height:220px}
+.season-now .body{padding:22px;display:grid;align-content:center;gap:8px}
+.season-now .badge{justify-self:start;background:var(--sakura);color:var(--sakura-deep);font-weight:700;font-size:12px;padding:3px 10px;border-radius:999px}
+.season-list{display:grid;gap:10px}
+.season-list div{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:baseline;padding:12px 14px;border-radius:12px;background:var(--surface-2)}
+.season-list div.on{background:var(--accent-soft)}
+.season-list b{font-family:var(--f-display);font-size:14px}
+.season-list span{color:var(--muted);font-size:13.5px}
+@media (max-width:820px){.seasons{grid-template-columns:1fr}.season-now{grid-template-columns:1fr}.season-now img{height:200px}}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card .ph{aspect-ratio:4/3;width:100%;object-fit:cover;display:block;background:var(--surface-2);max-width:100%}
+.card .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card .name-sub{font-size:12px;color:var(--muted)}
+.card p{margin:0;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.card dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:4px 0 0;font-size:13px}
+.card dt{color:var(--muted);white-space:nowrap}
+.card dd{margin:0}
+.card .foot{margin-top:auto;padding-top:6px;display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px}
+.mini{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:14px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
+.mini .card{scroll-snap-align:start}
+.mini .card .ph{aspect-ratio:3/2}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 22px}
+.filters button{border:1px solid var(--line);background:var(--surface);padding:6px 14px;border-radius:999px;cursor:pointer;font-size:14px}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-ink);border:0;padding:12px 22px;border-radius:999px;font-weight:700;text-decoration:none;cursor:pointer;font-size:15px}
+.cta.ghost{background:var(--accent-soft);color:var(--accent)}
+.cta[disabled]{opacity:.55;cursor:default}
+
+/* routes */
+.route-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;align-items:start}
+@media (max-width:900px){.route-layout{grid-template-columns:1fr}}
+.map-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;position:sticky;top:80px}
+@media (max-width:900px){.map-box{position:static}}
+.map-box svg{width:100%;height:auto;display:block;max-height:78vh}
+.map-note{font-size:12px;color:var(--muted);margin:6px 4px 0}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 14px;cursor:pointer;text-align:left;display:grid;line-height:1.35}
+.tabs button small{color:var(--muted);font-size:12px}
+.tabs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.tabs button[aria-pressed="true"] b{color:var(--accent)}
+.route-sum{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin:6px 0 16px}
+.route-sum b{color:var(--ink);font-variant-numeric:tabular-nums}
+ol.steps{list-style:none;margin:0;padding:0;display:grid}
+ol.steps li{display:grid;grid-template-columns:36px 1fr;gap:12px;position:relative;padding-bottom:18px}
+ol.steps li:not(:last-child)::before{content:"";position:absolute;left:17px;top:34px;bottom:0;border-left:2px dashed var(--line)}
+.num{width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-variant-numeric:tabular-nums}
+.step-body{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:start;min-width:0}
+.step-body img{width:72px;height:72px;object-fit:cover;border-radius:10px}
+.step-body .t{font-weight:700}
+.step-body .m{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.step-body .w{font-size:13.5px;margin-top:2px}
+.walkleg{font-size:12px;color:var(--muted);margin:-8px 0 10px 48px}
+.note{background:var(--surface-2);border-radius:12px;padding:12px 14px;font-size:13.5px;color:var(--muted)}
+
+/* AI */
+.ai-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.ai-layout{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.panel h3{margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:14px}
+.field>label,.field>.lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts label{cursor:pointer}
+.opts input{position:absolute;opacity:0;pointer-events:none}
+.opts span{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;background:var(--surface)}
+.opts input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.opts input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+textarea#p-extra{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:8px 10px;resize:vertical;min-height:44px}
+.chat{display:flex;flex-direction:column;height:min(640px,78vh)}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px 10px}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;font-size:14.5px;line-height:1.65;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}
+.msg.err{background:var(--sakura);color:var(--ink)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.quick button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;text-align:left}
+.composer{display:flex;gap:8px}
+.composer input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:var(--surface)}
+.composer button{flex:none}
+.plan-out{margin-top:18px}
+.plan-out .map-box{position:static;margin:14px 0}
+.status{font-size:13.5px;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--muted);font-size:12.5px}
+footer details summary{cursor:pointer;font-weight:700;color:var(--ink)}
+footer ul{padding-left:18px;margin:8px 0 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="GBase Support - 上野散歩 AI Guide">
+      <img src="img/gbase-logo.svg" width="36" height="36" alt="">
+      <span class="brand-word"><b>GBase</b><small>SUPPORT</small></span>
+    </a>
+    <nav class="main" aria-label="Main">
+      <a href="#home"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg><span data-k="nav_home"></span></a>
+      <a href="#spots"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.5" fill="var(--surface)"/></svg><span data-k="nav_spots"></span></a>
+      <a href="#routes"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5" fill="var(--surface)"/></svg><span data-k="nav_routes"></span></a>
+      <a href="#food"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h1.5v7h1V2H10v7h1V2h1.5v8a2.5 2.5 0 01-2 2.4V22h-2v-9.6A2.5 2.5 0 016 10zM17.5 2c-2 0-3.5 3-3.5 6.5 0 2.2.9 3.6 2 4V22h2V2z"/></svg><span data-k="nav_food"></span></a>
+      <a href="#ai"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg><span data-k="nav_ai"></span></a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="ja">日本語</button>
+      <button type="button" data-lang="zh">中文</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section class="view" id="v-home">
+    <div class="hero">
+      <div class="hero-photo">
+        <img class="bg" src="img/hero-pond.jpg" alt="">
+        <div class="wrap">
+          <h1>上野散歩 AI Guide</h1>
+          <p class="tag" data-k="tagline"></p>
+          <a class="hero-cta" href="#routes"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M10.5 8.5l3-1 2.2 3.4 2.8 1.1-.7 1.8-3.4-1.3-1-1.4-1 3.8 2.6 2.6V22h-2v-4.6l-2.6-2.4-1 3.9L7.4 22l-1.9-.6 2-6.4 1.4-5.2-1.6.7V13h-2V9.2z"/></svg><span data-k="hero_cta"></span><span aria-hidden="true">›</span></a>
+        </div>
+      </div>
+      <div class="hero-row"><div class="wrap" id="hero-row"></div></div>
+    </div>
+    <div class="wrap">
+      <div class="section">
+        <div class="section-head"><div><div class="eyebrow" data-k="season_eye"></div><h2 data-k="season_h"></h2></div></div>
+        <div class="seasons">
+          <div class="season-now" id="season-now"></div>
+          <div class="season-list" id="season-list"></div>
+        </div>
+      </div>
+
+      <div class="section" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px">
+        <div><h2 data-k="start_h"></h2><p class="lead" data-k="start_p"></p></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="cta" href="#routes" data-k="start_btn"></a>
+          <a class="cta ghost" href="#ai" data-scroll="planner" data-k="plan_btn_short"></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPOTS -->
+  <section class="view" id="v-spots" hidden>
+    <div class="wrap">
+      <div class="eyebrow">Spots</div>
+      <h2 data-k="spots_h"></h2>
+      <p class="lead" data-k="spots_lead"></p>
+      <div class="filters" id="filters"></div>
+      <div class="grid" id="spot-grid"></div>
+    </div>
+  </section>
+
+  <!-- ROUTES -->
+  <section class="view" id="v-routes" hidden>
+    <div class="wrap">
+      <div class="eyebrow">Walk Routes</div>
+      <h2 data-k="routes_h"></h2>
+      <p class="lead" data-k="routes_lead"></p>
+      <div class="route-layout" style="margin-top:22px">
+        <div class="map-box"><div id="route-map"></div><p class="map-note" data-k="map_note"></p></div>
+        <div>
+          <div class="tabs" id="route-tabs"></div>
+          <h3 id="route-title"></h3>
+          <div class="route-sum" id="route-sum"></div>
+          <ol class="steps" id="route-steps"></ol>
+          <div class="note" id="route-note"></div>
+          <p style="margin-top:16px"><a class="cta ghost" href="#ai" data-scroll="planner" data-k="custom_route"></a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOD -->
+  <section class="view" id="v-food" hidden>
+    <div class="wrap">
+      <div class="eyebrow">Food &amp; Rest</div>
+      <h2 data-k="food_h"></h2>
+      <p class="lead" data-k="food_lead"></p>
+      <div class="grid" id="food-grid" style="margin-top:22px"></div>
+      <div class="section">
+        <h3 data-k="rest_h" style="margin-bottom:10px"></h3>
+        <div class="grid" id="rest-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section class="view" id="v-ai" hidden>
+    <div class="wrap">
+      <div class="eyebrow">AI Guide</div>
+      <h2 data-k="ai_h"></h2>
+      <p class="lead" data-k="ai_lead"></p>
+      <div class="ai-layout" style="margin-top:22px">
+        <div class="panel" id="planner">
+          <h3><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z" fill="var(--accent)"/></svg><span data-k="plan_h"></span></h3>
+          <form id="plan-form">
+            <div class="field"><span class="lbl" data-k="f_time"></span><div class="opts" id="o-time"></div></div>
+            <div class="field"><span class="lbl" data-k="f_int"></span><div class="opts" id="o-int"></div></div>
+            <div class="field"><span class="lbl" data-k="f_with"></span><div class="opts" id="o-with"></div></div>
+            <div class="field"><span class="lbl" data-k="f_weather"></span><div class="opts" id="o-weather"></div></div>
+            <div class="field"><span class="lbl" data-k="f_pace"></span><div class="opts" id="o-pace"></div></div>
+            <div class="field"><label for="p-extra" data-k="f_extra"></label><textarea id="p-extra" rows="2"></textarea></div>
+            <button class="cta" type="submit" id="plan-btn" data-k="plan_btn"></button>
+            <span class="status" id="plan-status" style="margin-left:10px"></span>
+          </form>
+          <div class="plan-out" id="plan-out" hidden></div>
+        </div>
+
+        <div class="panel chat" id="chat">
+          <h3><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z" fill="var(--accent)"/></svg><span data-k="chat_h"></span></h3>
+          <div class="msgs" id="msgs" aria-live="polite"></div>
+          <div class="quick" id="quick"></div>
+          <form class="composer" id="chat-form">
+            <input id="chat-q" type="text" autocomplete="off" data-ph="chat_ph" aria-label="Message">
+            <button class="cta" type="submit" id="chat-send" data-k="send"></button>
+          </form>
+        </div>
+      </div>
+      <p class="note" style="margin-top:18px" data-k="disclaimer"></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p data-k="foot_note"></p>
+    <details>
+      <summary data-k="credits_h"></summary>
+      <ul id="credits"></ul>
+    </details>
+  </div>
+</footer>
+
+<script>
+(() => {
+/* ---------- data ---------- */
+const SPOTS = [
+ {id:"park", img:"hero-sakura.jpg", cat:["nature","history"], ll:[35.7135,139.7738],
+  name:{ja:"上野恩賜公園・さくら通り",zh:"上野恩赐公园・樱花大道",en:"Ueno Park & Sakura-dori"},
+  desc:{ja:"1873年に日本最初の公園の一つとなった、上野エリアの中心です。桜は約1,200本。春の花見シーズンは特に人気です。",
+        zh:"1873 年成为日本最早的公园之一，是上野地区的核心。园内约有 1,200 棵樱花树，春季赏樱最受欢迎。",
+        en:"Made one of Japan's first public parks in 1873, this is the heart of Ueno. About 1,200 cherry trees make it a top hanami spot in spring."},
+  access:{ja:"JR上野駅 公園口から徒歩1分",zh:"JR 上野站公园口步行 1 分钟",en:"1 min from JR Ueno Sta. Park Exit"},
+  tip:{ja:"開花時期は毎年変わります。その年の公式情報を確認してください。",zh:"花期每年不同，请查看当年官方信息。",en:"Bloom dates change every year; check that year's official info."},
+  q:"Ueno Onshi Park"},
+ {id:"nmwa", img:"nmwa.jpg", cat:["museum"], ll:[35.7153,139.7758],
+  name:{ja:"国立西洋美術館",zh:"国立西洋美术馆",en:"National Museum of Western Art"},
+  desc:{ja:"ル・コルビュジエ設計の本館は2016年に世界文化遺産に登録。前庭ではロダン「考える人」「地獄の門」を無料で見られます。",
+        zh:"本馆由勒·柯布西耶设计，2016 年列入世界文化遗产。前庭可免费欣赏罗丹的《思想者》和《地狱之门》。",
+        en:"Le Corbusier's main building became a World Heritage Site in 2016. Rodin's The Thinker and The Gates of Hell stand in the free front courtyard."},
+  access:{ja:"公園口から徒歩1分",zh:"公园口步行 1 分钟",en:"1 min from Park Exit"},
+  tip:{ja:"雨の日にもおすすめ。開館日・料金は公式サイトで確認。",zh:"雨天也适合。开放日与票价请查官网。",en:"Good on rainy days. Check hours and fees on the official site."},
+  q:"National Museum of Western Art"},
+ {id:"tnm", img:"tnm2.jpg", cat:["museum","history"], ll:[35.7188,139.7766],
+  name:{ja:"東京国立博物館",zh:"东京国立博物馆",en:"Tokyo National Museum"},
+  desc:{ja:"1872年創立の日本最古の博物館。1938年竣工の本館は、洋風建築に和風の屋根をのせた「帝冠様式」です。",
+        zh:"创立于 1872 年，是日本历史最悠久的博物馆。1938 年建成的本馆为「帝冠样式」，西式建筑上加和式屋顶。",
+        en:"Founded in 1872, Japan's oldest museum. The 1938 main hall is in the Imperial Crown style: a Western building under a Japanese roof."},
+  access:{ja:"公園口から徒歩10分",zh:"公园口步行 10 分钟",en:"10 min from Park Exit"},
+  tip:{ja:"噴水広場の南側から本館と噴水を一緒に撮影できます。",zh:"从喷水广场南侧可把喷泉和本馆一起拍进画面。",en:"Shoot from the south side of the fountain to frame both."},
+  q:"Tokyo National Museum"},
+ {id:"science", img:"science.jpg", cat:["museum"], ll:[35.7164,139.7765],
+  name:{ja:"国立科学博物館",zh:"国立科学博物馆",en:"National Museum of Nature and Science"},
+  desc:{ja:"恐竜の骨格標本や日本の自然・科学技術の展示がある総合科学博物館。子ども連れに人気です。",
+        zh:"展示恐龙骨骼、日本自然与科技的综合科学博物馆，深受亲子游客欢迎。",
+        en:"A science museum with dinosaur skeletons and displays on Japan's nature and technology. Popular with families."},
+  access:{ja:"公園口から徒歩5分",zh:"公园口步行 5 分钟",en:"5 min from Park Exit"},
+  tip:{ja:"雨の日・子ども連れの定番。予約の要否を事前に確認。",zh:"雨天和亲子的首选，事先确认是否需要预约。",en:"A rainy-day and family favorite. Check whether booking is needed."},
+  q:"National Museum of Nature and Science"},
+ {id:"toshogu", img:"toshogu.jpg", cat:["history"], ll:[35.7154,139.7703],
+  name:{ja:"上野東照宮",zh:"上野东照宫",en:"Ueno Toshogu Shrine"},
+  desc:{ja:"徳川家康を祀る神社。1651年に家光が造営した金色の社殿「金色殿」は重要文化財です。参道には大名が奉納した燈籠が並びます。",
+        zh:"供奉德川家康的神社。1651 年由德川家光重建的「金色殿」是重要文化财，参道两侧排列着大名进献的灯笼。",
+        en:"A shrine to Tokugawa Ieyasu. The gilded Konjikiden, rebuilt in 1651, is an Important Cultural Property; feudal lords' lanterns line the approach."},
+  access:{ja:"公園口から徒歩10分",zh:"公园口步行 10 分钟",en:"10 min from Park Exit"},
+  tip:{ja:"境内は無料、金色殿の拝観は有料。冬と春はぼたん苑も。",zh:"境内免费，金色殿内部参观收费；冬春两季有牡丹苑。",en:"Grounds free; Konjikiden entry is paid. Peony garden in winter and spring."},
+  q:"Ueno Toshogu"},
+ {id:"kiyomizu", img:"kiyomizu.jpg", cat:["history"], ll:[35.7121,139.7735],
+  name:{ja:"清水観音堂",zh:"清水观音堂",en:"Kiyomizu Kannon-do"},
+  desc:{ja:"京都・清水寺を模して1631年に建てられたお堂で、重要文化財。「舞台」から不忍池を見下ろせます。",
+        zh:"仿京都清水寺于 1631 年建造，是重要文化财。从「舞台」可以俯瞰不忍池。",
+        en:"Built in 1631 on the model of Kyoto's Kiyomizu-dera, an Important Cultural Property. Its stage overlooks Shinobazu Pond."},
+  access:{ja:"京成上野駅から徒歩3分",zh:"京成上野站步行 3 分钟",en:"3 min from Keisei Ueno Sta."},
+  tip:{ja:"円を描く「月の松」越しに弁天堂が見えます。",zh:"透过绕成圆环的「月之松」可以看到弁天堂。",en:"Look through the looped Moon Pine to see Bentendo."},
+  q:"Kiyomizu Kannon-do"},
+ {id:"saigo", img:"saigo.jpg", cat:["history"], ll:[35.7111,139.7742],
+  name:{ja:"西郷隆盛像",zh:"西乡隆盛像",en:"Statue of Saigo Takamori"},
+  desc:{ja:"1898年に除幕された高村光雲作の銅像。明治維新の立役者・西郷隆盛が愛犬を連れています。",
+        zh:"1898 年揭幕、由高村光云制作的铜像。明治维新的重要人物西乡隆盛牵着爱犬。",
+        en:"Takamura Koun's bronze, unveiled in 1898, shows Meiji Restoration leader Saigo Takamori walking his dog."},
+  access:{ja:"京成上野駅から徒歩1分",zh:"京成上野站步行 1 分钟",en:"1 min from Keisei Ueno Sta."},
+  tip:{ja:"上野公園で一番有名な記念撮影スポット。",zh:"上野公园最有名的合影点。",en:"Ueno Park's best-known photo spot."},
+  q:"Saigo Takamori statue Ueno"},
+ {id:"shinobazu", img:"lotus-benten.jpg", cat:["nature"], ll:[35.7121,139.7700],
+  name:{ja:"不忍池・弁天堂",zh:"不忍池・弁天堂",en:"Shinobazu Pond & Bentendo"},
+  desc:{ja:"蓮池・ボート池・鵜の池からなる池。中島の弁天堂には芸能と財運の弁財天が祀られています。夏は蓮の花が見ごろです。",
+        zh:"由莲池、划船池和鸬鹚池组成。池中弁天堂供奉保佑艺能与财运的弁财天，夏季可赏荷花。",
+        en:"Made up of the Lotus, Boat and Cormorant ponds. Bentendo on the island honors Benzaiten, goddess of arts and fortune. Lotus blooms in summer."},
+  access:{ja:"上野駅 不忍口から徒歩5分",zh:"上野站不忍口步行 5 分钟",en:"5 min from Ueno Sta. Shinobazu Exit"},
+  tip:{ja:"ボートの営業・料金は季節や天候で変わります。",zh:"划船营业与费用随季节、天气变化。",en:"Boat hours and fees vary by season and weather."},
+  q:"Shinobazu Pond Bentendo"},
+ {id:"ameyoko", img:"ameyoko-night.jpg", cat:["food"], ll:[35.7092,139.7747],
+  name:{ja:"アメ横商店街",zh:"阿美横丁商店街",en:"Ameyoko Market"},
+  desc:{ja:"上野駅と御徒町駅の間、約500mの商店街。戦後の闇市が起源で、海産物・お菓子・衣料品・食べ歩きを楽しめます。",
+        zh:"位于上野站与御徒町站之间、长约 500 米的商店街。起源于战后黑市，可以买海鲜、零食、服饰，边走边吃。",
+        en:"A 500 m market street between Ueno and Okachimachi stations. It grew from a post-war black market: seafood, snacks, clothes and street food."},
+  access:{ja:"上野駅 不忍口・広小路口からすぐ",zh:"上野站不忍口、广小路口出站即到",en:"Right by Ueno Sta. Shinobazu / Hirokoji exits"},
+  tip:{ja:"営業時間・支払い方法は店ごとに違います。現金があると安心。",zh:"各店营业时间、支付方式不同，建议备现金。",en:"Hours and payment differ by shop; carry some cash."},
+  q:"Ameyoko"}
+];
+const POI = {
+  sta:{ll:[35.7146,139.7760],name:{ja:"JR上野駅 公園口",zh:"JR 上野站 公园口",en:"JR Ueno Sta. Park Exit"},img:null},
+  fountain:{ll:[35.7170,139.7745],name:{ja:"噴水広場",zh:"喷水广场",en:"Fountain Plaza"},img:null},
+  okachi:{ll:[35.7075,139.7748],name:{ja:"JR御徒町駅",zh:"JR 御徒町站",en:"JR Okachimachi Sta."},img:null}
+};
+const byId = id => SPOTS.find(s => s.id === id) || POI[id];
+
+const ROUTES = [
+ {id:"r60", mins:60, name:{ja:"気軽な1時間コース",zh:"轻松 1 小时路线",en:"Easy 1-hour walk"},
+  sub:{ja:"初めて・短時間",zh:"第一次来・时间短",en:"First visit, short time"},
+  stops:[["sta",0],["nmwa",10],["park",15],["kiyomizu",10],["saigo",5]],
+  note:{ja:"終点の西郷像の階段を下りると京成上野駅・JR上野駅 不忍口方面です。",zh:"从终点西乡像旁的台阶下去，就是京成上野站和 JR 上野站不忍口方向。",en:"The stairs by the Saigo statue lead down to Keisei Ueno and JR Ueno's Shinobazu Exit."}},
+ {id:"r120", mins:120, name:{ja:"自然を楽しむ2時間コース",zh:"自然散步 2 小时路线",en:"2-hour nature walk"},
+  sub:{ja:"水辺・写真",zh:"水景・拍照",en:"Waterside, photos"},
+  stops:[["sta",0],["park",15],["toshogu",25],["shinobazu",35],["kiyomizu",10],["saigo",5]],
+  note:{ja:"ボートを利用する場合は、当日の営業状況と天候を確認してください。",zh:"如要划船，请先确认当日营业情况和天气。",en:"If you want a boat, check that day's operation and the weather first."}},
+ {id:"r180", mins:180, name:{ja:"半日満喫3時間コース",zh:"半日 3 小时经典路线",en:"Half-day classic (3 h)"},
+  sub:{ja:"名所を一通り",zh:"名胜一次看全",en:"All the highlights"},
+  stops:[["sta",0],["nmwa",15],["tnm",15],["toshogu",30],["kiyomizu",15],["saigo",10],["shinobazu",30],["ameyoko",45]],
+  note:{ja:"9:30出発ならお昼ごろにアメ横に着きます。博物館の館内も見るなら1.5〜2時間追加。",zh:"9:30 出发，午饭时间到达阿美横。若要进博物馆参观，请再加 1.5–2 小时。",en:"Leave at 9:30 to reach Ameyoko by lunch. Add 1.5–2 h to go inside a museum."}},
+ {id:"rain", mins:150, name:{ja:"雨の日コース",zh:"雨天路线",en:"Rainy-day route"},
+  sub:{ja:"屋内中心",zh:"以室内为主",en:"Mostly indoors"},
+  stops:[["sta",0],["science",70],["tnm",70]],
+  note:{ja:"国立西洋美術館に替えてもOK。当日の開館状況・予約の要否を確認し、滑りにくい靴で。",zh:"也可以换成国立西洋美术馆。请确认当日开馆和是否需预约，穿防滑鞋。",en:"Swap in the Museum of Western Art if you like. Check opening and booking, and wear non-slip shoes."}}
+];
+
+const SEASONS = [
+ {months:[3,4], img:"hero-sakura.jpg", name:{ja:"春",zh:"春",en:"Spring"}, when:{ja:"3月下旬〜4月上旬",zh:"3 月下旬–4 月上旬",en:"Late Mar – early Apr"},
+  txt:{ja:"さくら通りの桜並木。混雑するので朝9時前がおすすめ。",zh:"樱花大道花开成廊，人多，建议 9 点前到。",en:"Cherry blossoms over Sakura-dori. Come before 9:00 to beat the crowds."}},
+ {months:[5,6,7,8], img:"lotus-benten.jpg", name:{ja:"夏",zh:"夏",en:"Summer"}, when:{ja:"7月〜8月",zh:"7–8 月",en:"Jul – Aug"},
+  txt:{ja:"不忍池の蓮が見ごろ。朝の涼しい時間が一番きれいです。",zh:"不忍池荷花盛开，清晨最美也最凉快。",en:"Lotus covers Shinobazu Pond; early morning is coolest and prettiest."}},
+ {months:[9,10,11], img:"tnm2.jpg", name:{ja:"秋",zh:"秋",en:"Autumn"}, when:{ja:"11月下旬〜12月上旬",zh:"11 月下旬–12 月上旬",en:"Late Nov – early Dec"},
+  txt:{ja:"イチョウと紅葉。散歩にいちばん気持ちのいい季節です。",zh:"银杏与红叶，最适合散步的季节。",en:"Ginkgo and autumn leaves: the most pleasant season for walking."}},
+ {months:[12,1,2], img:"toshogu.jpg", name:{ja:"冬",zh:"冬",en:"Winter"}, when:{ja:"1月〜2月",zh:"1–2 月",en:"Jan – Feb"},
+  txt:{ja:"東照宮のぼたん苑。年末のアメ横は正月の買い出しでにぎわいます。",zh:"东照宫牡丹苑开放；年末阿美横挤满采购年货的人。",en:"Toshogu's peony garden; Ameyoko fills with New Year shoppers in late December."}}
+];
+
+const FOOD = [
+ {img:"ameyoko2.jpg", name:{ja:"アメ横で食べ歩き",zh:"阿美横边走边吃",en:"Street food at Ameyoko"},
+  desc:{ja:"フルーツ串、海鮮丼、ケバブ、乾物やお菓子。立ち食いの小さな店が並びます。",zh:"水果串、海鲜盖饭、烤肉卷、干货零食，站着吃的小店一家接一家。",en:"Fruit skewers, seafood bowls, kebabs, dried goods and sweets from tiny stand-up stalls."},
+  area:{ja:"上野駅〜御徒町駅",zh:"上野站–御徒町站",en:"Ueno – Okachimachi"}, q:"Ameyoko"},
+ {img:"lotus.jpg", name:{ja:"不忍池のほとりで休憩",zh:"不忍池畔休息",en:"Rest by Shinobazu Pond"},
+  desc:{ja:"池の周りにベンチが多く、水辺を眺めながら一休みできます。夏は蓮の花。",zh:"池边长椅很多，可以看着水景歇歇脚，夏天还有荷花。",en:"Plenty of benches around the water for a break; lotus flowers in summer."},
+  area:{ja:"公園南西",zh:"公园西南侧",en:"South-west of the park"}, q:"Shinobazu Pond"},
+ {img:"sakura2.jpg", name:{ja:"園内のカフェ・売店",zh:"园内咖啡店与小卖部",en:"Cafés and kiosks in the park"},
+  desc:{ja:"噴水広場や美術館の周りにカフェと売店があり、ベンチも多く休憩に便利です。",zh:"喷水广场与美术馆周边有咖啡店和小卖部，长椅也多，方便休息。",en:"Cafés and kiosks around the Fountain Plaza and museums, with many benches nearby."},
+  area:{ja:"噴水広場周辺",zh:"喷水广场周边",en:"Around the Fountain Plaza"}, q:"Ueno Park Fountain Plaza"}
+];
+const REST = [
+ {name:{ja:"上野精養軒",zh:"上野精养轩",en:"Ueno Seiyoken"}, desc:{ja:"1872年創業の老舗洋食レストラン。東照宮と清水観音堂の間。",zh:"1872 年创业的老牌西餐厅，位于东照宫与清水观音堂之间。",en:"A Western-style restaurant founded in 1872, between Toshogu and Kiyomizu Kannon-do."}, q:"Ueno Seiyoken"},
+ {name:{ja:"お手洗い・飲み物",zh:"洗手间与饮水",en:"Toilets & drinks"}, desc:{ja:"公園口・噴水広場・不忍池の近くが便利。自動販売機は園内各所にあります。",zh:"公园口、喷水广场、不忍池旁的洗手间最方便；园内各处有自动售货机。",en:"Toilets near the Park Exit, Fountain Plaza and Shinobazu Pond; vending machines throughout the park."}, q:null},
+ {name:{ja:"マナー",zh:"礼仪",en:"Etiquette"}, desc:{ja:"食べ物は店の前で食べ終え、ゴミは持ち帰りを。カラスやハトに餌をあげないでください。",zh:"食物在店前吃完，垃圾请带走；不要喂食乌鸦和鸽子。",en:"Finish food at the stall, take your rubbish with you, and don't feed crows or pigeons."}, q:null}
+];
+
+const CREDITS = [
+ ["sakura2.jpg","Cherry tree in blossom @ Ueno Park (13438972635).jpg","Guilhem Vellut","CC BY 2.0"],
+ ["nmwa.jpg","National museum of western art05s3200.jpg","663highland","CC BY-SA 4.0"],
+ ["science.jpg","National Museum of Nature and Science 3.jpg","Syced","CC0"],
+ ["toshogu.jpg","Toshogu Shrine @ Ueno Park (14038395872).jpg","Guilhem Vellut","CC BY 2.0"],
+ ["kiyomizu.jpg","Kiyomizu Kannon-do Temple @ Ueno Park (14061710053).jpg","Guilhem Vellut","CC BY 2.0"],
+ ["saigo.jpg","Statue of Saigo Takamori, Ueno Park, Tokyo.jpg","Daderot","Public domain"],
+ ["lotus.jpg","Ueno Park Lotus Flowers in 2024.jpg","Klaasjeoranje","CC BY-SA 4.0"],
+ ["ameyoko2.jpg","Ueno Ameya-Yokocho shops under track 2015.jpg","Wpcpey","CC BY-SA 4.0"]
+];
+
+/* ---------- UI strings ---------- */
+const T = {
+ ja:{nav_home:"ホーム",hero_cta:"上野を散歩してみる",rec_routes:"おすすめ散歩コース",more:"もっと見る",user_photos:"ホーム背景はAI生成のイメージ画像です。上野公園の桜並木、東京国立博物館、アメ横、不忍池の写真：プロジェクト提供素材（公開前に利用許諾を確認）",nav_spots:"スポット",nav_routes:"散歩コース",nav_food:"グルメ・休憩",nav_ai:"AIガイド",
+  tagline:"東京・上野をもっと楽しく、もっと便利に",search_ph:"上野のおすすめスポットを教えてください…",
+  tile_ai:"AIチャット",tile_ai_s:"質問する",tile_routes:"散歩コース",tile_routes_s:"ルートを見る",tile_spots:"おすすめスポット",tile_spots_s:"人気の場所",tile_food:"グルメ・休憩",tile_food_s:"食べる・休む",tile_plan:"マイプラン",tile_plan_s:"AIが計画",
+  season_eye:"Season",season_h:"いまの上野の見どころ",now:"いまの季節",pop_eye:"Popular",pop_h:"人気スポット",see_all:"すべて見る",
+  start_h:"AIガイドに聞いてみよう",start_p:"画面右下のチャットボタンから、上野のことを日本語・中国語・英語で質問できます。条件に合わせたコースづくりもおまかせください。",start_btn:"コースを見る",plan_btn_short:"AIでプランを作る",
+  spots_h:"上野のおすすめスポット",spots_lead:"実際の写真と紹介、アクセス、楽しみ方のヒントをまとめました。",f_all:"すべて",cat_nature:"自然",cat_history:"歴史",cat_museum:"博物館・美術館",cat_food:"グルメ",
+  access:"アクセス",tip:"ヒント",open_map:"Googleマップで見る",ask_ai:"AIに聞く",
+  routes_h:"散歩コース",routes_lead:"地図で順路と所要時間を確認できます。時間はモデル例で、歩く速さや滞在時間で変わります。",map_note:"簡略図です。縮尺・位置はおおよそです。",
+  walk:"徒歩",stay:"滞在",total:"合計",walk_total:"歩く時間",stops_n:"スポット数",min:"分",approx:"約",start:"スタート",custom_route:"自分に合うコースをAIに作ってもらう →",
+  food_h:"グルメ・休憩",food_lead:"散歩の途中で食べる、休む。営業時間はお店ごとに違うので事前に確認してください。",rest_h:"知っておくと便利",area:"エリア",
+  ai_h:"AIガイド",ai_lead:"あなたの時間・興味・同行者に合わせてAIが散歩コースを作ります。中国語・日本語・英語で何でも質問できます。",
+  plan_h:"AIに散歩コースを作ってもらう",f_time:"使える時間",f_int:"興味（複数可）",f_with:"だれと",f_weather:"天気",f_pace:"歩くペース",f_extra:"その他の希望（任意）",
+  plan_btn:"コースを作る",planning:"AIがコースを考えています…",plan_res:"あなたのコース",
+  chat_h:"AIに質問する",chat_ph:"質問を入力…",send:"送信",stop:"停止",hello:"こんにちは！上野散歩AIガイドです。おすすめスポット、コース、季節の見どころ、アクセスなど、気軽に聞いてください。",
+  thinking:"考えています…",
+  disclaimer:"AIの回答とモデルコースは参考情報です。営業時間・休館日・料金・開花時期・混雑は変わることがあるため、お出かけ前に公式情報を確認してください。",
+  foot_note:"上野散歩 AI Guide（PoC）。施設情報は基礎ナレッジ UENO-KB-001 にもとづきます。",credits_h:"写真クレジット",
+  e_unavail:"AIチャットは画面右下のチャットボタン（GBase）からご利用ください。",e_denied:"AIの利用が許可されていません。",e_rate:"リクエストが多すぎます。少し待ってからもう一度お試しください。",e_generic:"うまく回答できませんでした。もう一度お試しください。",e_plan:"コースを作れませんでした。条件を変えてもう一度お試しください。"},
+ zh:{nav_home:"首页",hero_cta:"去上野散步吧",rec_routes:"推荐散步路线",more:"查看更多",user_photos:"首页背景为 AI 生成的示意图。上野公园樱花大道、东京国立博物馆、阿美横、不忍池照片：项目提供素材（公开前请确认使用授权）",nav_spots:"景点",nav_routes:"散步路线",nav_food:"美食与休息",nav_ai:"AI 向导",
+  tagline:"让东京・上野之旅更有趣、更便利",search_ph:"请推荐上野值得去的景点…",
+  tile_ai:"AI 聊天",tile_ai_s:"随时提问",tile_routes:"散步路线",tile_routes_s:"查看路线",tile_spots:"推荐景点",tile_spots_s:"热门地点",tile_food:"美食休息",tile_food_s:"吃饭・歇脚",tile_plan:"我的行程",tile_plan_s:"AI 规划",
+  season_eye:"Season",season_h:"当季上野看点",now:"当前季节",pop_eye:"Popular",pop_h:"热门景点",see_all:"查看全部",
+  start_h:"问问 AI 向导",start_p:"点击页面右下角的聊天按钮，就能用中文、日语或英语询问上野的一切；也可以让 AI 按你的条件规划路线。",start_btn:"查看路线",plan_btn_short:"用 AI 规划行程",
+  spots_h:"上野推荐景点",spots_lead:"真实照片、景点介绍、交通方式与游览建议。",f_all:"全部",cat_nature:"自然",cat_history:"历史",cat_museum:"博物馆・美术馆",cat_food:"美食",
+  access:"交通",tip:"建议",open_map:"在 Google 地图中查看",ask_ai:"问 AI",
+  routes_h:"散步路线",routes_lead:"在地图上查看路线顺序和预计步行时间。时间为示例，会随步速和停留时间变化。",map_note:"示意图，比例与位置为大致位置。",
+  walk:"步行",stay:"停留",total:"合计",walk_total:"步行时间",stops_n:"景点数",min:"分钟",approx:"约",start:"出发",custom_route:"让 AI 规划适合我的路线 →",
+  food_h:"美食与休息",food_lead:"散步途中吃点东西、歇歇脚。各店营业时间不同，请事先确认。",rest_h:"实用小贴士",area:"区域",
+  ai_h:"AI 向导",ai_lead:"AI 会根据你的时间、兴趣和同行人员规划散步路线；也可以用中文、日语或英语随时提问。",
+  plan_h:"让 AI 规划散步路线",f_time:"可用时间",f_int:"兴趣（可多选）",f_with:"同行人员",f_weather:"天气",f_pace:"步行节奏",f_extra:"其他需求（选填）",
+  plan_btn:"生成路线",planning:"AI 正在规划路线…",plan_res:"你的专属路线",
+  chat_h:"向 AI 提问",chat_ph:"输入你的问题…",send:"发送",stop:"停止",hello:"你好！我是上野散步 AI 向导。推荐景点、路线、当季看点、交通方式，都可以问我。",
+  thinking:"思考中…",
+  disclaimer:"AI 回答与示范路线仅供参考。营业时间、休馆日、票价、花期和人流可能变化，出发前请查看官方最新信息。",
+  foot_note:"上野散步 AI Guide（PoC）。设施信息依据基础知识库 UENO-KB-001。",credits_h:"照片来源",
+  e_unavail:"请点击页面右下角的聊天按钮（GBase）向 AI 提问。",e_denied:"AI 功能未获授权。",e_rate:"请求过于频繁，请稍后再试。",e_generic:"暂时无法回答，请再试一次。",e_plan:"未能生成路线，请调整条件后再试。"},
+ en:{nav_home:"Home",hero_cta:"Start your Ueno walk",rec_routes:"Recommended walks",more:"See more",user_photos:"The home background is an AI-generated illustration. Ueno Park cherry avenue, Tokyo National Museum, Ameyoko and Shinobazu Pond photos: project-supplied (confirm usage rights before publishing)",nav_spots:"Spots",nav_routes:"Walk Routes",nav_food:"Food & Rest",nav_ai:"AI Guide",
+  tagline:"Explore Ueno, Tokyo: more fun, less hassle",search_ph:"Which places in Ueno do you recommend?",
+  tile_ai:"AI Chat",tile_ai_s:"Ask anything",tile_routes:"Walk Routes",tile_routes_s:"See routes",tile_spots:"Top Spots",tile_spots_s:"Popular places",tile_food:"Food & Rest",tile_food_s:"Eat, take a break",tile_plan:"My Plan",tile_plan_s:"AI planner",
+  season_eye:"Season",season_h:"What to see in Ueno now",now:"Now",pop_eye:"Popular",pop_h:"Popular spots",see_all:"See all",
+  start_h:"Ask the AI Guide",start_p:"Use the chat button at the bottom right to ask about Ueno in English, Japanese or Chinese, or let the AI plan a route around your needs.",start_btn:"See routes",plan_btn_short:"Plan with AI",
+  spots_h:"Top spots in Ueno",spots_lead:"Real photos, short guides, access and tips for each place.",f_all:"All",cat_nature:"Nature",cat_history:"History",cat_museum:"Museums",cat_food:"Food",
+  access:"Access",tip:"Tip",open_map:"Open in Google Maps",ask_ai:"Ask AI",
+  routes_h:"Walk routes",routes_lead:"See the order of stops and walking times on the map. Times are examples and change with your pace and stays.",map_note:"Schematic map; scale and positions are approximate.",
+  walk:"Walk",stay:"Stay",total:"Total",walk_total:"Walking",stops_n:"Stops",min:"min",approx:"~",start:"Start",custom_route:"Let the AI plan a route for me →",
+  food_h:"Food & rest",food_lead:"Places to eat and rest along the way. Opening hours vary by shop, so check before you go.",rest_h:"Good to know",area:"Area",
+  ai_h:"AI Guide",ai_lead:"The AI plans a walk around your time, interests and companions. Ask anything in Chinese, Japanese or English.",
+  plan_h:"Plan my walk with AI",f_time:"Time available",f_int:"Interests (pick any)",f_with:"Who's coming",f_weather:"Weather",f_pace:"Walking pace",f_extra:"Anything else? (optional)",
+  plan_btn:"Plan my route",planning:"The AI is planning your route…",plan_res:"Your route",
+  chat_h:"Ask the AI",chat_ph:"Type your question…",send:"Send",stop:"Stop",hello:"Hi! I'm the Ueno Walking AI Guide. Ask me about spots, routes, seasonal highlights or getting around.",
+  thinking:"Thinking…",
+  disclaimer:"AI answers and sample routes are for reference. Hours, closing days, fees, bloom dates and crowds change, so check official information before you go.",
+  foot_note:"Ueno Walking AI Guide (PoC). Facility facts follow the knowledge base UENO-KB-001.",credits_h:"Photo credits",
+  e_unavail:"Please use the chat button (GBase) at the bottom right to ask the AI.",e_denied:"AI use hasn't been allowed for this page.",e_rate:"Too many requests. Wait a moment and try again.",e_generic:"Couldn't get an answer. Please try again.",e_plan:"Couldn't build a route. Change the options and try again."}
+};
+const OPTS = {
+ time:{type:"radio",vals:[["60",{ja:"1時間",zh:"1 小时",en:"1 hour"}],["120",{ja:"2時間",zh:"2 小时",en:"2 hours"}],["180",{ja:"半日（3時間）",zh:"半日（3 小时）",en:"Half day (3 h)"}],["300",{ja:"1日",zh:"1 天",en:"Full day"}]],def:"120"},
+ int:{type:"checkbox",vals:[["sakura",{ja:"桜・花",zh:"樱花・花卉",en:"Cherry blossoms"}],["nature",{ja:"自然・水辺",zh:"自然・水景",en:"Nature & water"}],["history",{ja:"歴史・寺社",zh:"历史・寺社",en:"History & shrines"}],["museum",{ja:"博物館・美術館",zh:"博物馆・美术馆",en:"Museums & art"}],["food",{ja:"食べ歩き",zh:"美食",en:"Street food"}],["shopping",{ja:"買い物",zh:"购物",en:"Shopping"}],["photo",{ja:"写真",zh:"拍照",en:"Photos"}]],def:["nature","history"]},
+ with:{type:"radio",vals:[["solo",{ja:"ひとり",zh:"一个人",en:"Solo"}],["couple",{ja:"友人・カップル",zh:"朋友・情侣",en:"Friends / couple"}],["kids",{ja:"子ども連れ",zh:"带孩子",en:"With kids"}],["senior",{ja:"シニア",zh:"长辈同行",en:"With seniors"}]],def:"couple"},
+ weather:{type:"radio",vals:[["sunny",{ja:"晴れ",zh:"晴天",en:"Fine"}],["rain",{ja:"雨",zh:"雨天",en:"Rainy"}],["hot",{ja:"暑い",zh:"炎热",en:"Hot"}]],def:"sunny"},
+ pace:{type:"radio",vals:[["easy",{ja:"ゆっくり",zh:"轻松慢走",en:"Relaxed"}],["normal",{ja:"ふつう",zh:"普通",en:"Normal"}]],def:"normal"}
+};
+const QUICK = {
+ ja:["上野公園にはどんな観光スポットがありますか？","上野で桜を見るなら、どこがおすすめですか？","不忍池では何を楽しめますか？","上野で2時間散歩するなら、おすすめのコースを教えてください。","雨の日でも上野を楽しめますか？"],
+ zh:["上野公园有什么值得参观的地方？","上野哪里可以欣赏樱花？","不忍池适合什么样的游客？","只有一个小时，带孩子怎么逛上野？","下雨天上野还有什么可玩？"],
+ en:["What are the must-see spots in Ueno Park?","Where is the best place to see cherry blossoms?","What can I do at Shinobazu Pond?","Suggest a 2-hour walk in Ueno.","Is Ueno fun on a rainy day?"]
+};
+
+/* ---------- knowledge base for the AI ---------- */
+const KB = `【上野散步 AI Guide 知识库 / UENO-KB-001 摘要】
+概况：上野位于东京都台东区，集文化、艺术、自然与购物于一地。上野恩赐公园内外有动物园、美术馆、博物馆；车站旁有阿美横丁商店街。适合第一次来东京的游客、喜欢自然的人、对历史艺术感兴趣的人、亲子家庭、喜欢逛街美食的人。时间有限可只安排 1–2 小时。
+景点：
+- 上野恩赐公园：1873 年成为日本最早的公园之一，原为宽永寺寺域。官方资料称樱花约 1,200 棵；春季樱花大道（さくら通り）最热门。花期每年不同，不可保证某天满开。
+- 国立西洋美术馆：1959 年开馆，本馆由勒·柯布西耶设计，2016 年列入世界文化遗产；前庭可免费看罗丹《思想者》《地狱之门》。周一通常休馆。
+- 东京国立博物馆：1872 年创立，日本最古老的博物馆；本馆 1938 年建成，帝冠样式。周一通常休馆。
+- 国立科学博物馆：恐龙骨骼、日本自然与科技展示，亲子与雨天首选。
+- 上野动物园（恩赐上野动物园）：适合亲子；开放与动物展示可能变化，不可保证一定能看到某种动物。东照宫参道旁可远眺园内的旧宽永寺五重塔。
+- 上野东照宫：供奉德川家康，金色殿 1651 年由家光重建，重要文化财；境内免费、金色殿内部收费；冬春有牡丹苑。
+- 清水观音堂：1631 年仿京都清水寺建造，重要文化财；从「舞台」俯瞰不忍池；「月之松」圆环中可见弁天堂。免费。
+- 西乡隆盛像：1898 年揭幕，高村光云作，牵着爱犬；旁边台阶通往京成上野站。
+- 不忍池：公园南侧，分莲池、划船池、鸬鹚池；7–8 月荷花；弁天堂供奉弁财天；部分区域可划船，营业与费用随季节天气变化。
+- 阿美横丁：上野站与御徒町站之间约 500 米商店街，起源于战后黑市；海鲜、零食、服饰、化妆品、杂货、餐饮；各店营业时间、支付方式不同，部分只收现金；年末最拥挤。
+- 上野精养轩：1872 年创业的老牌西餐厅，在东照宫与清水观音堂之间。
+交通：JR 山手线、京滨东北线，东京地铁银座线、日比谷线到上野站；京成上野站。去公园用「公园口」，去阿美横用「不忍口」或「广小路口」。公园口步行约 1 分钟到公园，到东京国立博物馆约 10 分钟。
+示范路线：1 小时（公园口→西洋美术馆前庭→樱花大道→清水观音堂→西乡像）；2 小时自然（公园口→樱花大道→东照宫→不忍池弁天堂→清水观音堂→西乡像）；半日 3 小时（公园口→西洋美术馆→东京国立博物馆外观→东照宫→清水观音堂→西乡像→不忍池→阿美横午餐）；雨天（国立科学博物馆、东京国立博物馆、国立西洋美术馆等室内设施）。
+季节：春 3 月下旬–4 月上旬樱花；夏 7–8 月荷花，注意防暑；秋 11 月下旬–12 月上旬银杏红叶；冬东照宫牡丹苑，年末阿美横热闹。
+礼仪：神社「二拜、二拍手、一拜」；寺院合掌不拍手；堂内多禁止拍照；食物在店前吃完；垃圾带走；不喂乌鸦鸽子；不进入封闭区域、不触碰展品。
+回答规则：只回答有依据的内容，资料没有的要说明无法确认，不编造；营业时间、休馆日、票价、活动、花期、天气、拥挤属动态信息，提醒以官方最新信息为准；路线建议先考虑时间、兴趣、同行人员、步行能力，示范路线不是实时导航；用用户使用的语言（中文、日语或英语）回答，简洁友好；遵守规则与安全。`;
+
+/* ---------- helpers ---------- */
+let lang = "ja";
+try { const s = localStorage.getItem("ueno-lang"); if (s && T[s]) lang = s; } catch (e) {}
+const t = k => (T[lang] && T[lang][k]) || T.ja[k] || k;
+const L = o => (o && (o[lang] || o.ja)) || "";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const gmap = q => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q + " Tokyo");
+const dist = (a, b) => { const dy = (a[0]-b[0])*111000, dx = (a[1]-b[1])*90300; return Math.hypot(dx, dy); };
+const walkMin = (a, b) => Math.max(2, Math.round(dist(a, b) * 1.3 / 70));
+const LANG_NAME = {ja:"日本語",zh:"简体中文",en:"English"};
+
+/* ---------- map ---------- */
+const X = lon => (lon - 139.7662) * 46154, Y = lat => (35.7212 - lat) * 56667;
+function mapSVG(stops){
+  const pts = stops.map(id => { const p = byId(id); return {id, x:X(p.ll[1]), y:Y(p.ll[0]), p}; });
+  const route = pts.length > 1 ? `<polyline points="${pts.map(q=>q.x.toFixed(1)+","+q.y.toFixed(1)).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2 9" />` : "";
+  const onRoute = new Set(stops);
+  const base = SPOTS.filter(s => !onRoute.has(s.id)).map(s => `<g><circle cx="${X(s.ll[1]).toFixed(1)}" cy="${Y(s.ll[0]).toFixed(1)}" r="5" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.5"/><text x="${(X(s.ll[1])+9).toFixed(1)}" y="${(Y(s.ll[0])+4).toFixed(1)}" font-size="13" fill="var(--muted)">${esc(L(s.name))}</text></g>`).join("");
+  const marks = pts.map((q,i) => {
+    const right = q.x < 440;
+    return `<g><circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="15" fill="var(--accent)" stroke="var(--surface)" stroke-width="3"/><text x="${q.x.toFixed(1)}" y="${(q.y+5).toFixed(1)}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent-ink)">${i+1}</text><text x="${(q.x + (right?21:-21)).toFixed(1)}" y="${(q.y+5).toFixed(1)}" text-anchor="${right?"start":"end"}" font-size="14" font-weight="700" fill="var(--ink)" stroke="var(--surface)" stroke-width="4" paint-order="stroke">${esc(L(q.p.name))}</text></g>`;
+  }).join("");
+  return `<svg viewBox="0 0 620 850" role="img" aria-label="Ueno map">
+   <rect width="620" height="850" fill="var(--surface-2)"/>
+   <polygon points="150,80 540,80 495,330 460,400 400,560 370,610 300,560 240,470 230,400 150,400" fill="var(--moss)" stroke="var(--moss-line)" stroke-width="1.5"/>
+   <rect x="160" y="100" width="170" height="190" rx="18" fill="none" stroke="var(--moss-line)" stroke-dasharray="5 5"/>
+   <text x="245" y="200" text-anchor="middle" font-size="13" fill="var(--muted)">${esc({ja:"上野動物園",zh:"上野动物园",en:"Ueno Zoo"}[lang])}</text>
+   <ellipse cx="129" cy="540" rx="97" ry="150" fill="var(--water)" stroke="var(--water-line)" stroke-width="1.5"/>
+   <text x="105" y="640" text-anchor="middle" font-size="13" fill="var(--water-line)" font-weight="700">${esc({ja:"不忍池",zh:"不忍池",en:"Shinobazu Pond"}[lang])}</text>
+   <path d="M372 610 L352 850" stroke="var(--line)" stroke-width="10" fill="none"/>
+   <text x="330" y="780" font-size="11.5" fill="var(--muted)" transform="rotate(-86 330 780)">${esc({ja:"中央通り",zh:"中央通",en:"Chuo-dori"}[lang])}</text>
+   <path d="M392 600 L397 770" stroke="var(--sakura-deep)" stroke-width="7" stroke-opacity=".35" fill="none" stroke-linecap="round"/>
+   <path d="M575 0 L508 419 L397 776 L383 850" stroke="var(--rail)" stroke-width="4" fill="none"/>
+   <path d="M575 0 L508 419 L397 776 L383 850" stroke="var(--surface-2)" stroke-width="1.5" stroke-dasharray="8 8" fill="none"/>
+   <rect x="496" y="408" width="70" height="24" rx="6" fill="var(--ink)"/><text x="531" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">${esc({ja:"上野駅",zh:"上野站",en:"Ueno"}[lang])}</text>
+   <rect x="410" y="765" width="84" height="24" rx="6" fill="var(--ink)"/><text x="452" y="782" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">${esc({ja:"御徒町駅",zh:"御徒町站",en:"Okachimachi"}[lang])}</text>
+   <g transform="translate(580 790)"><path d="M0 -22 L7 0 L0 -5 L-7 0z" fill="var(--ink)"/><text y="16" text-anchor="middle" font-size="12" fill="var(--ink)" font-weight="700">N</text></g>
+   ${base}${route}${marks}
+  </svg>`;
+}
+
+/* ---------- renderers ---------- */
+function spotCard(s, compact){
+  const cats = s.cat.map(c => `<span class="chip">${esc(t("cat_"+c))}</span>`).join("");
+  if (compact) return `<a class="card" href="#spots" style="text-decoration:none;color:inherit"><img class="ph" src="img/${s.img}" alt="${esc(L(s.name))}" loading="lazy"><div class="body"><h3>${esc(L(s.name))}</h3><div class="chips">${cats}</div></div></a>`;
+  return `<article class="card" data-cat="${s.cat.join(" ")}"><img class="ph" src="img/${s.img}" alt="${esc(L(s.name))}" loading="lazy"><div class="body">
+    <div class="chips">${cats}</div><h3>${esc(L(s.name))}</h3><p>${esc(L(s.desc))}</p>
+    <dl><dt>${esc(t("access"))}</dt><dd>${esc(L(s.access))}</dd><dt>${esc(t("tip"))}</dt><dd>${esc(L(s.tip))}</dd></dl>
+    <div class="foot"><a href="${gmap(s.q)}" target="_blank" rel="noopener">${esc(t("open_map"))} ↗</a><a href="#ai" data-askspot="${s.id}">${esc(t("ask_ai"))}</a></div></div></article>`;
+}
+let spotFilter = "all";
+function renderSpots(){
+  const cats = ["all","nature","history","museum","food"];
+  $("#filters").innerHTML = cats.map(c => `<button type="button" data-f="${c}" aria-pressed="${c===spotFilter}">${esc(c==="all"?t("f_all"):t("cat_"+c))}</button>`).join("");
+  $("#spot-grid").innerHTML = SPOTS.filter(s => spotFilter==="all" || s.cat.includes(spotFilter)).map(s => spotCard(s)).join("");
+}
+function renderHome(){
+  const m = new Date().getMonth() + 1;
+  const cur = SEASONS.find(s => s.months.includes(m)) || SEASONS[0];
+  $("#season-now").innerHTML = `<img src="img/${cur.img}" alt=""><div class="body"><span class="badge">${esc(t("now"))} · ${esc(L(cur.name))}</span><h3 style="font-size:22px">${esc(L(cur.when))}</h3><p style="margin:0">${esc(L(cur.txt))}</p></div>`;
+  $("#season-list").innerHTML = SEASONS.map(s => `<div class="${s===cur?"on":""}"><b>${esc(L(s.name))}</b><span>${esc(L(s.when))} — ${esc(L(s.txt))}</span></div>`).join("");
+  const IC = {
+    flower:'<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="#ec5f93"><circle cx="12" cy="6.5" r="3.6"/><circle cx="17.4" cy="10.4" r="3.6"/><circle cx="15.3" cy="16.8" r="3.6"/><circle cx="8.7" cy="16.8" r="3.6"/><circle cx="6.6" cy="10.4" r="3.6"/></g><circle cx="12" cy="12" r="2.2" fill="#ffd36b"/></svg>',
+    drop:'<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 7 6 11a6 6 0 01-12 0c0-4 6-11 6-11z" fill="#3b8be0"/></svg>',
+    cart:'<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 4h2.6l2.4 10.5h10.3L20.5 7H6.4" fill="none" stroke="#f08a24" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9" cy="19" r="1.7" fill="#f08a24"/><circle cx="17" cy="19" r="1.7" fill="#f08a24"/></svg>',
+    museum:'<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5H3zM5 10h2.4v8H5zM10.8 10h2.4v8h-2.4zM16.6 10H19v8h-2.4zM3 19h18v2H3z" fill="#6d5cf0"/></svg>'
+  };
+  const HC = [
+    ["park","flower",{ja:"上野公園",zh:"上野公园",en:"Ueno Park"},{ja:"桜の名所、広大な公園",zh:"赏樱名所、广阔公园",en:"Cherry blossoms, wide lawns"}],
+    ["shinobazu","drop",{ja:"不忍池",zh:"不忍池",en:"Shinobazu Pond"},{ja:"美しい蓮の池",zh:"美丽的荷花池",en:"A pond full of lotus"}],
+    ["ameyoko","cart",{ja:"アメ横商店街",zh:"阿美横丁",en:"Ameyoko"},{ja:"ショッピング＆グルメ",zh:"购物与美食",en:"Shopping & street food"}],
+    ["tnm","museum",{ja:"東京国立博物館",zh:"东京国立博物馆",en:"Tokyo National Museum"},{ja:"日本の美をめぐる",zh:"探访日本之美",en:"Japanese art & history"}]
+  ];
+  const clock = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a3fd1" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  $("#hero-row").innerHTML = HC.map(([id, ic, nm, sub]) => { const s = byId(id); return `<a class="hcard" href="#spots"><img src="img/${s.img}" alt="${esc(L(nm))}"><div class="b"><b>${IC[ic]}<span>${esc(L(nm))}</span></b><small>${esc(L(sub))}</small><span class="go" aria-hidden="true">›</span></div></a>`; }).join("")
+    + `<div class="hroutes"><div class="hr-head"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="#ec5f93" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M10.5 8.5l3-1 2.2 3.4 2.8 1.1-.7 1.8-3.4-1.3-1-1.4-1 3.8 2.6 2.6V22h-2v-4.6l-2.6-2.4-1 3.9L7.4 22l-1.9-.6 2-6.4 1.4-5.2-1.6.7V13h-2V9.2z"/></svg>${esc(t("rec_routes"))}</b><a href="#routes">${esc(t("more"))} ›</a></div>`
+    + ["r60","r120","r180"].map(id => { const sn = {r60:[{ja:"1時間コース",zh:"1 小时路线",en:"1-hour walk"},{ja:"ゆったり散歩",zh:"轻松散步",en:"Easy stroll"}],r120:[{ja:"2時間コース",zh:"2 小时路线",en:"2-hour walk"},{ja:"自然と水辺",zh:"自然与水景",en:"Nature & pond"}],r180:[{ja:"半日コース",zh:"半日路线",en:"Half-day walk"},{ja:"じっくり観光",zh:"深度游览",en:"All highlights"}]}[id]; return `<a class="hr-item" href="#routes" data-route="${id}">${clock}<span>${esc(L(sn[0]))}</span><small>${esc(L(sn[1]))}</small></a>`; }).join("") + `</div>`;
+}
+function routeStepsHTML(stops){ // stops: [{id, stay, why?}]
+  let html = "", prev = null;
+  stops.forEach((s, i) => {
+    const p = byId(s.id);
+    if (prev) html += `<div class="walkleg">↓ ${esc(t("walk"))} ${t("approx")}${walkMin(prev.ll, p.ll)} ${esc(t("min"))}</div>`;
+    const img = p.img ? `<img src="img/${p.img}" alt="">` : `<div style="width:72px;height:72px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent);font-weight:700;font-size:12px">${esc(t("start"))}</div>`;
+    const meta = s.stay ? `${esc(t("stay"))} ${s.stay} ${esc(t("min"))}` : esc(t("start"));
+    html += `<li><span class="num">${i+1}</span><div class="step-body">${img}<div style="min-width:0"><div class="t">${esc(L(p.name))}</div><div class="m">${meta}</div>${s.why?`<div class="w">${esc(s.why)}</div>`:(p.desc?`<div class="w" style="color:var(--muted)">${esc(L(p.tip))}</div>`:"")}</div></div></li>`;
+    prev = p;
+  });
+  return html;
+}
+function totals(stops){
+  let w = 0, st = 0;
+  stops.forEach((s,i) => { st += s.stay||0; if (i) w += walkMin(byId(stops[i-1].id).ll, byId(s.id).ll); });
+  return {w, st, all:w+st};
+}
+let routeSel = "r120";
+function renderRoutes(){
+  $("#route-tabs").innerHTML = ROUTES.map(r => `<button type="button" data-r="${r.id}" aria-pressed="${r.id===routeSel}"><b>${esc(L(r.name))}</b><small>${esc(L(r.sub))}</small></button>`).join("");
+  const r = ROUTES.find(x => x.id === routeSel);
+  const stops = r.stops.map(([id, stay]) => ({id, stay}));
+  const tt = totals(stops);
+  $("#route-title").textContent = L(r.name);
+  $("#route-sum").innerHTML = `<span>${esc(t("total"))} <b>${t("approx")}${Math.round(tt.all/5)*5} ${esc(t("min"))}</b></span><span>${esc(t("walk_total"))} <b>${t("approx")}${tt.w} ${esc(t("min"))}</b></span><span>${esc(t("stops_n"))} <b>${stops.length-1}</b></span>`;
+  $("#route-steps").innerHTML = routeStepsHTML(stops);
+  $("#route-note").textContent = L(r.note);
+  $("#route-map").innerHTML = mapSVG(r.stops.map(s => s[0]));
+}
+function renderFood(){
+  $("#food-grid").innerHTML = FOOD.map(f => `<article class="card"><img class="ph" src="img/${f.img}" alt="${esc(L(f.name))}" loading="lazy"><div class="body"><h3>${esc(L(f.name))}</h3><p>${esc(L(f.desc))}</p><dl><dt>${esc(t("area"))}</dt><dd>${esc(L(f.area))}</dd></dl><div class="foot"><a href="${gmap(f.q)}" target="_blank" rel="noopener">${esc(t("open_map"))} ↗</a></div></div></article>`).join("");
+  $("#rest-list").innerHTML = REST.map(r => `<article class="card"><div class="body"><h3>${esc(L(r.name))}</h3><p>${esc(L(r.desc))}</p>${r.q?`<div class="foot"><a href="${gmap(r.q)}" target="_blank" rel="noopener">${esc(t("open_map"))} ↗</a></div>`:""}</div></article>`).join("");
+}
+function renderOpts(){
+  for (const [key, o] of Object.entries(OPTS)) {
+    const box = $("#o-"+key);
+    const prev = [...box.querySelectorAll("input:checked")].map(i => i.value);
+    const sel = prev.length ? prev : [].concat(o.def);
+    box.innerHTML = o.vals.map(([v, lab]) => `<label><input type="${o.type}" name="${key}" id="o-${key}-${v}" value="${v}" ${sel.includes(v)?"checked":""}><span>${esc(L(lab))}</span></label>`).join("");
+  }
+}
+function renderQuick(){
+  $("#quick").innerHTML = QUICK[lang].map(q => `<button type="button">${esc(q)}</button>`).join("");
+}
+function renderCredits(){
+  $("#credits").innerHTML = CREDITS.map(([f, file, a, lic]) => `<li><a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g,"_"))}" target="_blank" rel="noopener">${esc(file)}</a> — ${esc(a)} / ${esc(lic)}</li>`).join("");
+}
+function applyStatic(){
+  document.documentElement.lang = lang === "zh" ? "zh-Hans" : lang;
+  document.querySelectorAll("[data-k]").forEach(el => { el.textContent = t(el.dataset.k); });
+  document.querySelectorAll("[data-ph]").forEach(el => { el.placeholder = t(el.dataset.ph); });
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+}
+function renderAll(){
+  applyStatic(); renderHome(); renderSpots(); renderRoutes(); renderFood(); renderOpts(); renderQuick(); renderCredits(); $("#credits").insertAdjacentHTML("afterbegin", `<li>${esc(t("user_photos"))}</li>`);
+  if (lastPlan) renderPlan(lastPlan);
+  if (!chatStarted) { $("#msgs").innerHTML = ""; addMsg("bot", t("hello")); }
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ["home","spots","routes","food","ai"];
+function route(){
+  const h = (location.hash || "#home").slice(1);
+  const v = VIEWS.includes(h) ? h : "home";
+  VIEWS.forEach(n => { $("#v-"+n).hidden = n !== v; });
+  document.querySelectorAll("nav.main a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#"+v ? "page" : "false"));
+  if (pendingScroll) { const el = document.getElementById(pendingScroll); pendingScroll = null; if (el) setTimeout(() => el.scrollIntoView({behavior:"smooth", block:"start"}), 30); }
+  else window.scrollTo(0, 0);
+}
+let pendingScroll = null;
+window.addEventListener("hashchange", route);
+document.addEventListener("click", e => {
+  const sc = e.target.closest("[data-scroll]"); if (sc) pendingScroll = sc.dataset.scroll;
+  const lb = e.target.closest(".lang button");
+  if (lb) { lang = lb.dataset.lang; try { localStorage.setItem("ueno-lang", lang); } catch (err) {} renderAll(); }
+  const fb = e.target.closest("#filters button"); if (fb) { spotFilter = fb.dataset.f; renderSpots(); }
+  const rb = e.target.closest("#route-tabs button"); if (rb) { routeSel = rb.dataset.r; renderRoutes(); }
+  const hr = e.target.closest("[data-route]"); if (hr) { routeSel = hr.dataset.route; renderRoutes(); }
+  const qb = e.target.closest("#quick button"); if (qb) ask(qb.textContent);
+  const as = e.target.closest("[data-askspot]");
+  if (as) { const s = byId(as.dataset.askspot); pendingScroll = "chat"; setTimeout(() => ask({ja:`${L(s.name)}の見どころと楽しみ方を教えてください。`,zh:`请介绍${L(s.name)}的看点和游览建议。`,en:`What should I know about ${L(s.name)}?`}[lang]), 60); }
+});
+
+/* ---------- AI ---------- */
+/* Standalone build: no Claude runtime. Chat is handled by the GBase widget (see the slot before </body>); the planner uses the built-in rules in localPlan(). */
+let samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(() => null) : Promise.resolve(null);
+let aiDead = false;
+function errCopy(code){
+  if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)) { aiDead = true; return code==="not_granted" ? t("e_denied") : t("e_unavail"); }
+  if (code === "rate_limited") return t("e_rate");
+  return t("e_generic");
+}
+function addMsg(role, text){
+  const d = document.createElement("div"); d.className = "msg " + role; d.textContent = text;
+  $("#msgs").appendChild(d); $("#msgs").scrollTop = $("#msgs").scrollHeight; return d;
+}
+const clean = s => s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/^#{1,4}\s*/gm, "").replace(/^\s*[-*]\s+/gm, "・");
+let turns = [], chatStarted = false, chatCtl = null, busy = false;
+async function ask(q){
+  q = (q || "").trim(); if (!q || busy) return;
+  if (location.hash !== "#ai") { pendingScroll = "chat"; location.hash = "ai"; }
+  chatStarted = true; addMsg("user", q);
+  const bubble = addMsg("bot", t("thinking"));
+  const sample = await samplePromise;
+  if (!sample || aiDead) { bubble.textContent = t("e_unavail"); bubble.classList.add("err"); return; }
+  busy = true; setChatBusy(true);
+  turns.push({role:"user", content:q});
+  const rules = `你是「上野散步 AI Guide」的导游助手。根据下面的知识库回答游客问题。\n- 用游客这一条消息所用的语言回答（日语、中文或英语）。网站当前界面语言：${LANG_NAME[lang]}。\n- 简洁、友好、具体，一般不超过 8 行；可用「・」列点；不要用 Markdown 标题或粗体。\n- 只依据知识库；没有依据的要说明无法确认，不要编造营业时间、票价或店名。\n- 动态信息（营业时间、休馆日、票价、花期、天气、拥挤）提醒以官方最新信息为准。\n- 规划路线时考虑时间、兴趣、同行人员、步行能力，并提示可在本网站「AI 向导」用规划器生成地图路线。\n\n${KB}`;
+  chatCtl = new AbortController();
+  try {
+    const recent = turns.slice(-10);
+    const res = await sample([{role:"user", content:rules}, {role:"assistant", content:"OK"}, ...recent], {cache:false, signal:chatCtl.signal, onText:({text}) => { bubble.textContent = clean(text); $("#msgs").scrollTop = $("#msgs").scrollHeight; }});
+    turns.push({role:"assistant", content:res.text});
+    bubble.textContent = clean(res.text);
+  } catch (e) {
+    turns.pop();
+    if (e && e.code === "cancelled") { bubble.textContent = e.text ? clean(e.text) : "—"; }
+    else { bubble.textContent = (e && e.text && e.code !== "refused" ? clean(e.text) + "\n\n" : "") + errCopy(e && e.code); bubble.classList.add("err"); }
+  } finally { busy = false; setChatBusy(false); chatCtl = null; }
+}
+function setChatBusy(on){
+  const b = $("#chat-send"); b.textContent = on ? t("stop") : t("send"); b.dataset.k = on ? "stop" : "send";
+  b.type = on ? "button" : "submit"; b.onclick = on ? () => chatCtl && chatCtl.abort() : null;
+}
+$("#chat-form").addEventListener("submit", e => { e.preventDefault(); const v = $("#chat-q").value; $("#chat-q").value = ""; ask(v); });
+
+
+/* planner */
+let lastPlan = null, planBusy = false;
+function readForm(){
+  const val = k => [...document.querySelectorAll(`#o-${k} input:checked`)].map(i => i.value);
+  const lab = (k, v) => L(OPTS[k].vals.find(x => x[0]===v)[1]);
+  return {time:val("time")[0], int:val("int"), with:val("with")[0], weather:val("weather")[0], pace:val("pace")[0], extra:$("#p-extra").value.trim(),
+    text(){ return `可用时间: ${this.time} 分钟; 兴趣: ${this.int.map(v=>lab("int",v)).join(", ")||"不限"}; 同行: ${lab("with",this.with)}; 天气: ${lab("weather",this.weather)}; 步行节奏: ${lab("pace",this.pace)}; 其他: ${this.extra||"无"}`; }};
+}
+$("#plan-form").addEventListener("submit", async e => {
+  e.preventDefault(); if (planBusy) return;
+  const f = readForm();
+  const st = $("#plan-status"), btn = $("#plan-btn");
+  const sample = await samplePromise;
+  if (!sample || aiDead) { localPlan(f); return; }
+  planBusy = true; btn.disabled = true; st.textContent = t("planning");
+  const list = SPOTS.map(s => `${s.id}: ${s.name.zh} / ${s.name.en} [${s.cat.join(",")}] — ${s.desc.zh}`).join("\n");
+  const prompt = `你是上野散步路线规划师。根据游客条件，从下列景点中挑选并排序，组成一条从「sta」(JR上野站公园口) 出发的步行路线。\n可选景点 id:\n${list}\n\n游客条件: ${f.text()}\n\n要求:\n- 第一站必须是 {"id":"sta","stay":0}。之后只用上面列出的 id，不重复。\n- 停留分钟 + 步行时间（相邻景点约 5–12 分钟）合计不超过可用时间。雨天以室内博物馆为主；带孩子或长辈减少站数、多安排休息；炎热时避开长时间户外。\n- 按地理顺序排列，避免折返（博物馆在公园北侧，东照宫在西侧，清水观音堂和西乡像在南侧，不忍池在西南，阿美横在最南）。\n- 所有文字用${LANG_NAME[lang]}书写。why 每条一句话，说明为何适合这位游客。\n- 不要编造知识库以外的营业时间、票价或店名。\n\n知识库:\n${KB}\n\n只回复一个 JSON 对象，格式:\n{"title":"路线名","summary":"两句话概述","stops":[{"id":"sta","stay":0,"why":"..."},{"id":"park","stay":15,"why":"..."}],"tips":["提示1","提示2"]}`;
+  try {
+    const out = await sample.json(prompt, {cache:false});
+    const valid = new Set(["sta", ...SPOTS.map(s=>s.id)]), seen = new Set();
+    let stops = (Array.isArray(out && out.stops) ? out.stops : []).filter(s => s && valid.has(s.id) && !seen.has(s.id) && seen.add(s.id)).map(s => ({id:s.id, stay:Math.max(0, Math.min(240, Number(s.stay)||0)), why:String(s.why||"")}));
+    if (!stops.length || stops[0].id !== "sta") stops.unshift({id:"sta", stay:0, why:""});
+    if (stops.length < 2) throw {code:"invalid_json"};
+    lastPlan = {title:String(out.title||t("plan_res")), summary:String(out.summary||""), stops, tips:(Array.isArray(out.tips)?out.tips:[]).map(String).slice(0,4), lang};
+    renderPlan(lastPlan); st.textContent = "";
+    $("#plan-out").scrollIntoView({behavior:"smooth", block:"start"});
+  } catch (err) {
+    st.textContent = err && err.code === "invalid_json" ? t("e_plan") : errCopy(err && err.code);
+  } finally { planBusy = false; btn.disabled = false; }
+});
+function localPlan(f){
+  const time = Number(f.time) || 120;
+  let r = f.weather === "rain" ? ROUTES.find(x => x.id === "rain") : time <= 60 ? ROUTES.find(x => x.id === "r60") : time <= 120 ? ROUTES.find(x => x.id === "r120") : ROUTES.find(x => x.id === "r180");
+  let stops = r.stops.map(([id, stay]) => ({id, stay, why:""}));
+  if (f.weather !== "rain" && (f.int.includes("food") || f.int.includes("shopping")) && !stops.some(s => s.id === "ameyoko") && time >= 120) stops.push({id:"ameyoko", stay:30, why:""});
+  if (f.weather !== "rain" && f.int.includes("museum") && !stops.some(s => s.id === "nmwa" || s.id === "tnm" || s.id === "science") && time >= 120) stops.splice(1, 0, {id:"nmwa", stay:30, why:""});
+  const tips = [L(r.note)];
+  if (f.with === "kids") tips.push({ja:"子ども連れなら国立科学博物館や上野動物園を組み合わせるのもおすすめです。",zh:"带孩子的话，可以加上国立科学博物馆或上野动物园。",en:"With kids, consider adding the science museum or Ueno Zoo."}[lang]);
+  if (f.with === "senior" || f.pace === "easy") tips.push({ja:"ベンチの多い噴水広場や不忍池のほとりでこまめに休憩しましょう。",zh:"喷水广场和不忍池畔长椅多，记得适时休息。",en:"Take breaks at the Fountain Plaza or by Shinobazu Pond, where benches are plentiful."}[lang]);
+  if (f.weather === "hot") tips.push({ja:"暑い日は水分補給を忘れずに。屋内の博物館を組み合わせると快適です。",zh:"天热注意补水，可以穿插室内博物馆。",en:"Drink plenty of water on hot days; mixing in an indoor museum helps."}[lang]);
+  lastPlan = {title:L(r.name), summary:L(r.sub), stops, tips, lang};
+  renderPlan(lastPlan); $("#plan-status").textContent = "";
+  $("#plan-out").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function renderPlan(p){
+  const box = $("#plan-out"); box.hidden = false;
+  const tt = totals(p.stops);
+  box.innerHTML = `<div class="eyebrow">${esc(t("plan_res"))}</div><h3 style="font-size:20px;margin-top:4px">${esc(p.title)}</h3>
+   <p style="margin:6px 0 0">${esc(p.summary)}</p>
+   <div class="route-sum"><span>${esc(t("total"))} <b>${t("approx")}${Math.round(tt.all/5)*5} ${esc(t("min"))}</b></span><span>${esc(t("walk_total"))} <b>${t("approx")}${tt.w} ${esc(t("min"))}</b></span></div>
+   <div class="map-box">${mapSVG(p.stops.map(s=>s.id))}</div>
+   <ol class="steps">${routeStepsHTML(p.stops)}</ol>
+   ${p.tips.length ? `<div class="note">${p.tips.map(x=>"・"+esc(x)).join("<br>")}</div>` : ""}`;
+}
+
+/* ---------- boot ---------- */
+renderAll(); route();
+})();
+</script>
+
+<!-- ============================================================
+     GBase チャットボット埋め込みコード / GBase 嵌入代码
+     GBase 管理画面「WEBサイトへの埋め込み」で取得した <script> をここに貼り付けてください。
+     把 GBase 后台提供的 <script> 代码粘贴在这里（</body> 之前）。
+     ============================================================ -->
+
+<script>
+  window.gptbaseConfig = {
+    chatbotId: 'd2da90a1-715e-4a0a-8d0d-abbd0e516dd6',
+    baseUrl: 'https://admin.gbase.ai',
+    apiBaseUrl: 'https://admin.gbase.ai/api',
+  };
+</script>
+<script
+  src="https://gbase.ai/plugin/plugin.js"
+  id="d2da90a1-715e-4a0a-8d0d-abbd0e516dd6"
+  defer>
+</script>
+
+</body>
+</html>
