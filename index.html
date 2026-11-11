@@ -539,7 +539,7 @@ const T = {
   thinking:"考えています…",
   disclaimer:"AIの回答とモデルコースは参考情報です。営業時間・休館日・料金・開花時期・混雑は変わることがあるため、お出かけ前に公式情報を確認してください。",
   foot_note:"上野散歩 AI Guide（PoC）。施設情報は基礎ナレッジ UENO-KB-001 にもとづきます。",credits_h:"写真クレジット",
-  e_unavail:"右下の着物の女の子（GBase AIガイド）のチャット画面を開きました。そちらで質問してください。",e_denied:"AIの利用が許可されていません。",e_rate:"リクエストが多すぎます。少し待ってからもう一度お試しください。",e_generic:"うまく回答できませんでした。もう一度お試しください。",e_plan:"コースを作れませんでした。条件を変えてもう一度お試しください。"},
+  e_sent:"質問を右下のGBase AIガイドに送りました。回答はそちらのチャット画面に表示されます。",e_unavail:"右下の着物の女の子（GBase AIガイド）のチャット画面を開きました。そちらで質問してください。",e_denied:"AIの利用が許可されていません。",e_rate:"リクエストが多すぎます。少し待ってからもう一度お試しください。",e_generic:"うまく回答できませんでした。もう一度お試しください。",e_plan:"コースを作れませんでした。条件を変えてもう一度お試しください。"},
  zh:{nav_home:"首页",m_loading:"AI 聊天正在加载，请稍后再点一次。（AI 聊天只在正式网站上可用）",mascot_say:"有问题就问我吧！",hero_cta:"去上野散步吧",rec_routes:"推荐散步路线",more:"查看更多",user_photos:"首页背景为 AI 生成的示意图。上野公园樱花大道、东京国立博物馆、阿美横、不忍池照片：项目提供素材（公开前请确认使用授权）",nav_spots:"景点",nav_routes:"散步路线",nav_food:"美食与休息",nav_ai:"AI 向导",
   tagline:"让东京・上野之旅更有趣、更便利",search_ph:"请推荐上野值得去的景点…",
   tile_ai:"AI 聊天",tile_ai_s:"随时提问",tile_routes:"散步路线",tile_routes_s:"查看路线",tile_spots:"推荐景点",tile_spots_s:"热门地点",tile_food:"美食休息",tile_food_s:"吃饭・歇脚",tile_plan:"我的行程",tile_plan_s:"AI 规划",
@@ -557,7 +557,7 @@ const T = {
   thinking:"思考中…",
   disclaimer:"AI 回答与示范路线仅供参考。营业时间、休馆日、票价、花期和人流可能变化，出发前请查看官方最新信息。",
   foot_note:"上野散步 AI Guide（PoC）。设施信息依据基础知识库 UENO-KB-001。",credits_h:"照片来源",
-  e_unavail:"已为你打开右下角和服小姑娘（GBase AI 向导）的聊天窗口，请在那里提问。",e_denied:"AI 功能未获授权。",e_rate:"请求过于频繁，请稍后再试。",e_generic:"暂时无法回答，请再试一次。",e_plan:"未能生成路线，请调整条件后再试。"},
+  e_sent:"已把问题发送给右下角的 GBase AI 向导，回答会显示在那个聊天窗口里。",e_unavail:"已为你打开右下角和服小姑娘（GBase AI 向导）的聊天窗口，请在那里提问。",e_denied:"AI 功能未获授权。",e_rate:"请求过于频繁，请稍后再试。",e_generic:"暂时无法回答，请再试一次。",e_plan:"未能生成路线，请调整条件后再试。"},
  en:{nav_home:"Home",m_loading:"The AI chat is still loading. Tap again in a moment. (The chat only works on the published site.)",mascot_say:"Ask me about Ueno!",hero_cta:"Start your Ueno walk",rec_routes:"Recommended walks",more:"See more",user_photos:"The home background is an AI-generated illustration. Ueno Park cherry avenue, Tokyo National Museum, Ameyoko and Shinobazu Pond photos: project-supplied (confirm usage rights before publishing)",nav_spots:"Spots",nav_routes:"Walk Routes",nav_food:"Food & Rest",nav_ai:"AI Guide",
   tagline:"Explore Ueno, Tokyo: more fun, less hassle",search_ph:"Which places in Ueno do you recommend?",
   tile_ai:"AI Chat",tile_ai_s:"Ask anything",tile_routes:"Walk Routes",tile_routes_s:"See routes",tile_spots:"Top Spots",tile_spots_s:"Popular places",tile_food:"Food & Rest",tile_food_s:"Eat, take a break",tile_plan:"My Plan",tile_plan_s:"AI planner",
@@ -575,7 +575,7 @@ const T = {
   thinking:"Thinking…",
   disclaimer:"AI answers and sample routes are for reference. Hours, closing days, fees, bloom dates and crowds change, so check official information before you go.",
   foot_note:"Ueno Walking AI Guide (PoC). Facility facts follow the knowledge base UENO-KB-001.",credits_h:"Photo credits",
-  e_unavail:"The chat with the kimono guide (GBase AI) at the bottom right is now open. Ask your question there.",e_denied:"AI use hasn't been allowed for this page.",e_rate:"Too many requests. Wait a moment and try again.",e_generic:"Couldn't get an answer. Please try again.",e_plan:"Couldn't build a route. Change the options and try again."}
+  e_sent:"Sent to the GBase AI guide at the bottom right. The answer appears in that chat window.",e_unavail:"The chat with the kimono guide (GBase AI) at the bottom right is now open. Ask your question there.",e_denied:"AI use hasn't been allowed for this page.",e_rate:"Too many requests. Wait a moment and try again.",e_generic:"Couldn't get an answer. Please try again.",e_plan:"Couldn't build a route. Change the options and try again."}
 };
 const OPTS = {
  time:{type:"radio",vals:[["60",{ja:"1時間",zh:"1 小时",en:"1 hour"}],["120",{ja:"2時間",zh:"2 小时",en:"2 hours"}],["180",{ja:"半日（3時間）",zh:"半日（3 小时）",en:"Half day (3 h)"}],["300",{ja:"1日",zh:"1 天",en:"Full day"}]],def:"120"},
@@ -783,7 +783,7 @@ document.addEventListener("click", e => {
   const qb = e.target.closest("#quick button"); if (qb) ask(qb.textContent);
   if (e.target.closest("#mascot") || e.target.closest("#voice-hint")) openGBase();
   const as = e.target.closest("[data-askspot]");
-  if (as) { const s = byId(as.dataset.askspot); pendingScroll = "chat"; setTimeout(() => ask({ja:`${L(s.name)}の見どころと楽しみ方を教えてください。`,zh:`请介绍${L(s.name)}的看点和游览建议。`,en:`What should I know about ${L(s.name)}?`}[lang]), 60); }
+  if (as) { const s = byId(as.dataset.askspot); const q = {ja:`${L(s.name)}の見どころと楽しみ方を教えてください。`,zh:`请介绍${L(s.name)}的看点和游览建议。`,en:`What should I know about ${L(s.name)}?`}[lang]; if (!(window.claude && window.claude.use) && sendToGBase(q)) return; pendingScroll = "chat"; setTimeout(() => ask(q), 60); }
 });
 
 function openGBase(){
@@ -794,6 +794,16 @@ function openGBase(){
   tip.textContent = t("m_loading"); tip.hidden = false;
   clearTimeout(openGBase.timer); openGBase.timer = setTimeout(() => { tip.hidden = true; }, 5000);
   return false;
+}
+/* Send a question straight into the GBase widget (postMessage interface of plugin.js; verified on the live site 2026-11-11). Returns false if the widget isn't loaded yet. */
+function sendToGBase(q){
+  const f = document.getElementById("gptbase-bubble-window"), b = document.getElementById("gptbase-bubble-button");
+  if (!f || !b || !f.contentWindow) return false;
+  let origin; try { origin = new URL(f.src).origin; } catch (e) { return false; }
+  const wasClosed = f.style.display === "none";
+  if (wasClosed) b.click();   /* let the plugin open the window (icon, mobile viewport, openChat) */
+  setTimeout(() => f.contentWindow.postMessage({ type: "send", question: q }, origin), wasClosed ? 400 : 0);
+  return true;
 }
 /* ---------- AI ---------- */
 /* Standalone build: no Claude runtime. Chat is handled by the GBase widget (see the slot before </body>); the planner uses the built-in rules in localPlan(). */
@@ -816,7 +826,7 @@ async function ask(q){
   chatStarted = true; addMsg("user", q);
   const bubble = addMsg("bot", t("thinking"));
   const sample = await samplePromise;
-  if (!sample || aiDead) { bubble.textContent = t("e_unavail"); openGBase(); return; }
+  if (!sample || aiDead) { if (sendToGBase(q)) { bubble.textContent = t("e_sent"); } else { bubble.textContent = t("m_loading"); openGBase(); } return; }
   busy = true; setChatBusy(true);
   turns.push({role:"user", content:q});
   const rules = `你是「上野散步 AI Guide」的导游助手。根据下面的知识库回答游客问题。\n- 用游客这一条消息所用的语言回答（日语、中文或英语）。网站当前界面语言：${LANG_NAME[lang]}。\n- 简洁、友好、具体，一般不超过 8 行；可用「・」列点；不要用 Markdown 标题或粗体。\n- 只依据知识库；没有依据的要说明无法确认，不要编造营业时间、票价或店名。\n- 动态信息（营业时间、休馆日、票价、花期、天气、拥挤）提醒以官方最新信息为准。\n- 规划路线时考虑时间、兴趣、同行人员、步行能力，并提示可在本网站「AI 向导」用规划器生成地图路线。\n\n${KB}`;
