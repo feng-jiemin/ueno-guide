@@ -190,6 +190,9 @@ textarea#p-extra{width:100%;border:1px solid var(--line);border-radius:10px;back
 .composer{display:flex;gap:8px}
 .composer input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:var(--surface)}
 .composer button{flex:none}
+.voice-hint{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:9px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--surface-2);color:var(--muted);font:inherit;font-size:13.5px;text-align:left;cursor:pointer}
+.voice-hint:hover{color:var(--text,inherit);border-style:solid}
+.voice-hint svg{flex:none;fill:var(--accent)}
 .plan-out{margin-top:18px}
 .plan-out .map-box{position:static;margin:14px 0}
 .status{font-size:13.5px;color:var(--muted)}
@@ -345,6 +348,7 @@ footer ul{padding-left:18px;margin:8px 0 0}
             <input id="chat-q" type="text" autocomplete="off" data-ph="chat_ph" aria-label="Message">
             <button class="cta" type="submit" id="chat-send" data-k="send"></button>
           </form>
+          <button type="button" class="voice-hint" id="voice-hint"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-2.1A7 7 0 0019 12z"/></svg><span data-k="voice_hint"></span></button>
         </div>
       </div>
       <p class="note" style="margin-top:18px" data-k="disclaimer"></p>
@@ -524,7 +528,7 @@ const T = {
   ai_h:"AIガイド",ai_lead:"あなたの時間・興味・同行者に合わせてAIが散歩コースを作ります。中国語・日本語・英語で何でも質問できます。",
   plan_h:"AIに散歩コースを作ってもらう",f_time:"使える時間",f_int:"興味（複数可）",f_with:"だれと",f_weather:"天気",f_pace:"歩くペース",f_extra:"その他の希望（任意）",
   plan_btn:"コースを作る",planning:"AIがコースを考えています…",plan_res:"あなたのコース",
-  chat_h:"AIに質問する",chat_ph:"質問を入力…",send:"送信",stop:"停止",hello:"こんにちは！上野散歩AIガイドです。おすすめスポット、コース、季節の見どころ、アクセスなど、気軽に聞いてください。",
+  chat_h:"AIに質問する",chat_ph:"質問を入力…",send:"送信",voice_hint:"🎤 音声でも質問できます：右下の着物の女の子（GBase AIガイド）を開き、マイクボタンを押して話しかけてください。（ここをタップで開きます）",stop:"停止",hello:"こんにちは！上野散歩AIガイドです。おすすめスポット、コース、季節の見どころ、アクセスなど、気軽に聞いてください。",
   thinking:"考えています…",
   disclaimer:"AIの回答とモデルコースは参考情報です。営業時間・休館日・料金・開花時期・混雑は変わることがあるため、お出かけ前に公式情報を確認してください。",
   foot_note:"上野散歩 AI Guide（PoC）。施設情報は基礎ナレッジ UENO-KB-001 にもとづきます。",credits_h:"写真クレジット",
@@ -542,7 +546,7 @@ const T = {
   ai_h:"AI 向导",ai_lead:"AI 会根据你的时间、兴趣和同行人员规划散步路线；也可以用中文、日语或英语随时提问。",
   plan_h:"让 AI 规划散步路线",f_time:"可用时间",f_int:"兴趣（可多选）",f_with:"同行人员",f_weather:"天气",f_pace:"步行节奏",f_extra:"其他需求（选填）",
   plan_btn:"生成路线",planning:"AI 正在规划路线…",plan_res:"你的专属路线",
-  chat_h:"向 AI 提问",chat_ph:"输入你的问题…",send:"发送",stop:"停止",hello:"你好！我是上野散步 AI 向导。推荐景点、路线、当季看点、交通方式，都可以问我。",
+  chat_h:"向 AI 提问",chat_ph:"输入你的问题…",send:"发送",voice_hint:"🎤 也可以用语音提问：打开右下角的和服小姑娘（GBase AI 向导），点击麦克风按钮直接说话。（点这里打开）",stop:"停止",hello:"你好！我是上野散步 AI 向导。推荐景点、路线、当季看点、交通方式，都可以问我。",
   thinking:"思考中…",
   disclaimer:"AI 回答与示范路线仅供参考。营业时间、休馆日、票价、花期和人流可能变化，出发前请查看官方最新信息。",
   foot_note:"上野散步 AI Guide（PoC）。设施信息依据基础知识库 UENO-KB-001。",credits_h:"照片来源",
@@ -560,7 +564,7 @@ const T = {
   ai_h:"AI Guide",ai_lead:"The AI plans a walk around your time, interests and companions. Ask anything in Chinese, Japanese or English.",
   plan_h:"Plan my walk with AI",f_time:"Time available",f_int:"Interests (pick any)",f_with:"Who's coming",f_weather:"Weather",f_pace:"Walking pace",f_extra:"Anything else? (optional)",
   plan_btn:"Plan my route",planning:"The AI is planning your route…",plan_res:"Your route",
-  chat_h:"Ask the AI",chat_ph:"Type your question…",send:"Send",stop:"Stop",hello:"Hi! I'm the Ueno Walking AI Guide. Ask me about spots, routes, seasonal highlights or getting around.",
+  chat_h:"Ask the AI",chat_ph:"Type your question…",send:"Send",voice_hint:"🎤 You can also ask by voice: open the kimono guide (GBase AI) at the bottom right, tap the mic button and speak. (Tap here to open it.)",stop:"Stop",hello:"Hi! I'm the Ueno Walking AI Guide. Ask me about spots, routes, seasonal highlights or getting around.",
   thinking:"Thinking…",
   disclaimer:"AI answers and sample routes are for reference. Hours, closing days, fees, bloom dates and crowds change, so check official information before you go.",
   foot_note:"Ueno Walking AI Guide (PoC). Facility facts follow the knowledge base UENO-KB-001.",credits_h:"Photo credits",
@@ -652,10 +656,20 @@ function spotCard(s, compact){
     <div class="foot"><a href="${gmap(s.q)}" target="_blank" rel="noopener">${esc(t("open_map"))} ↗</a><a href="#ai" data-askspot="${s.id}">${esc(t("ask_ai"))}</a></div></div></article>`;
 }
 let spotFilter = "all";
+/* clicking a home card: that spot first, then the other home cards in order, then the rest shuffled */
+const HOME_IDS = ["park","shinobazu","ameyoko","tnm"];
+let spotOrder = null;
+function buildSpotOrder(first){
+  const lead = [first, ...HOME_IDS.filter(id => id !== first)];
+  const rest = SPOTS.map(s => s.id).filter(id => !lead.includes(id));
+  for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+  return [...lead, ...rest];
+}
 function renderSpots(){
   const cats = ["all","nature","history","museum","food"];
   $("#filters").innerHTML = cats.map(c => `<button type="button" data-f="${c}" aria-pressed="${c===spotFilter}">${esc(c==="all"?t("f_all"):t("cat_"+c))}</button>`).join("");
-  $("#spot-grid").innerHTML = SPOTS.filter(s => spotFilter==="all" || s.cat.includes(spotFilter)).map(s => spotCard(s)).join("");
+  const list = spotOrder ? spotOrder.map(id => SPOTS.find(s => s.id === id)).filter(Boolean) : SPOTS;
+  $("#spot-grid").innerHTML = list.filter(s => spotFilter==="all" || s.cat.includes(spotFilter)).map(s => spotCard(s)).join("");
 }
 function renderHome(){
   const m = new Date().getMonth() + 1;
@@ -675,7 +689,7 @@ function renderHome(){
     ["tnm","museum",{ja:"東京国立博物館",zh:"东京国立博物馆",en:"Tokyo National Museum"},{ja:"日本の美をめぐる",zh:"探访日本之美",en:"Japanese art & history"}]
   ];
   const clock = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a3fd1" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
-  $("#hero-row").innerHTML = HC.map(([id, ic, nm, sub]) => { const s = byId(id); return `<a class="hcard" href="#spots"><img src="img/${s.img}" alt="${esc(L(nm))}"><div class="b"><b>${IC[ic]}<span>${esc(L(nm))}</span></b><small>${esc(L(sub))}</small><span class="go" aria-hidden="true">›</span></div></a>`; }).join("")
+  $("#hero-row").innerHTML = HC.map(([id, ic, nm, sub]) => { const s = byId(id); return `<a class="hcard" href="#spots" data-first="${id}"><img src="img/${s.img}" alt="${esc(L(nm))}"><div class="b"><b>${IC[ic]}<span>${esc(L(nm))}</span></b><small>${esc(L(sub))}</small><span class="go" aria-hidden="true">›</span></div></a>`; }).join("")
     + `<div class="hroutes"><div class="hr-head"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="#ec5f93" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M10.5 8.5l3-1 2.2 3.4 2.8 1.1-.7 1.8-3.4-1.3-1-1.4-1 3.8 2.6 2.6V22h-2v-4.6l-2.6-2.4-1 3.9L7.4 22l-1.9-.6 2-6.4 1.4-5.2-1.6.7V13h-2V9.2z"/></svg>${esc(t("rec_routes"))}</b><a href="#routes">${esc(t("more"))} ›</a></div>`
     + ["r60","r120","r180"].map(id => { const sn = {r60:[{ja:"1時間コース",zh:"1 小时路线",en:"1-hour walk"},{ja:"ゆったり散歩",zh:"轻松散步",en:"Easy stroll"}],r120:[{ja:"2時間コース",zh:"2 小时路线",en:"2-hour walk"},{ja:"自然と水辺",zh:"自然与水景",en:"Nature & pond"}],r180:[{ja:"半日コース",zh:"半日路线",en:"Half-day walk"},{ja:"じっくり観光",zh:"深度游览",en:"All highlights"}]}[id]; return `<a class="hr-item" href="#routes" data-route="${id}">${clock}<span>${esc(L(sn[0]))}</span><small>${esc(L(sn[1]))}</small></a>`; }).join("") + `</div>`;
 }
@@ -755,10 +769,12 @@ document.addEventListener("click", e => {
   const lb = e.target.closest(".lang button");
   if (lb) { lang = lb.dataset.lang; try { localStorage.setItem("ueno-lang", lang); } catch (err) {} renderAll(); }
   const fb = e.target.closest("#filters button"); if (fb) { spotFilter = fb.dataset.f; renderSpots(); }
+  const hc = e.target.closest(".hcard[data-first]"); if (hc) { spotFilter = "all"; spotOrder = buildSpotOrder(hc.dataset.first); renderSpots(); }
+  if (e.target.closest('nav.main a[href="#spots"]')) { spotOrder = null; renderSpots(); }
   const rb = e.target.closest("#route-tabs button"); if (rb) { routeSel = rb.dataset.r; renderRoutes(); }
   const hr = e.target.closest("[data-route]"); if (hr) { routeSel = hr.dataset.route; renderRoutes(); }
   const qb = e.target.closest("#quick button"); if (qb) ask(qb.textContent);
-  if (e.target.closest("#mascot")) openGBase();
+  if (e.target.closest("#mascot") || e.target.closest("#voice-hint")) openGBase();
   const as = e.target.closest("[data-askspot]");
   if (as) { const s = byId(as.dataset.askspot); pendingScroll = "chat"; setTimeout(() => ask({ja:`${L(s.name)}の見どころと楽しみ方を教えてください。`,zh:`请介绍${L(s.name)}的看点和游览建议。`,en:`What should I know about ${L(s.name)}?`}[lang]), 60); }
 });
