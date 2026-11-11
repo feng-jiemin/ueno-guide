@@ -200,7 +200,14 @@ textarea#p-extra{width:100%;border:1px solid var(--line);border-radius:10px;back
 /* mascot launcher (replaces the small default GBase button) */
 #gptbase-bubble-button{opacity:0!important;pointer-events:none!important}
 #gptbase-message-bubbles{display:none!important}
-@media (min-width:640px){#gptbase-bubble-window{right:150px!important;bottom:20px!important;top:auto!important;width:370px!important;height:min(560px,calc(100dvh - 40px))!important}}
+@media (min-width:640px){#gptbase-bubble-window{right:150px!important;bottom:20px!important;top:auto!important;width:var(--gb-w,370px)!important;height:var(--gb-h,min(560px,calc(100dvh - 40px)))!important;max-height:calc(100dvh - 40px)!important}}
+/* enlarge/restore button (+ drag to resize) for the GBase chat window (desktop only) */
+.gb-grip{position:fixed;z-index:2147483647;width:30px;height:30px;margin:-11px 0 0 -11px;border:0;padding:0;border-radius:50%;background:var(--accent,#c0446b);color:#fff;cursor:pointer;touch-action:none;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25);opacity:.85}
+.gb-grip:hover,.gb-grip:focus-visible{opacity:1}
+.gb-grip[hidden]{display:none}
+.gb-grip svg{fill:currentColor;pointer-events:none}
+.gb-dragging #gptbase-bubble-window{pointer-events:none!important}
+.gb-dragging,.gb-dragging *{cursor:nwse-resize!important;user-select:none!important}
 .m-tip{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));z-index:999999991;width:min(260px,calc(100vw - 28px));background:#fff;color:#24203a;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6;box-shadow:0 10px 26px rgba(60,20,60,.22)}
 .mascot{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:999999990;border:0;background:none;padding:0;cursor:pointer;display:grid;justify-items:center;-webkit-tap-highlight-color:transparent}
 .mascot .m-img{width:118px;height:auto;display:block;filter:drop-shadow(0 6px 10px rgba(60,20,60,.25));animation:m-hop 2.6s ease-in-out infinite;transform-origin:50% 100%}
@@ -889,6 +896,90 @@ function renderPlan(p){
 
 /* ---------- boot ---------- */
 renderAll(); route();
+})();
+</script>
+
+<script>
+/* ---------- GBase chat window: grip button (desktop) — click = enlarge/restore, drag = free resize ---------- */
+(() => {
+  const KEY = "ueno-gb-size", root = document.documentElement;
+  const ICON_MAX = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v2H7.4l4.3 4.3-1.4 1.4L6 7.4V11H4zM20 20h-7v-2h3.6l-4.3-4.3 1.4-1.4 4.3 4.3V13h2z"/></svg>';
+  const ICON_MIN = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11H4V9h3.6L3.3 4.7l1.4-1.4L9 7.6V4h2zM13 13h7v2h-3.6l4.3 4.3-1.4 1.4-4.3-4.3V20h-2z"/></svg>';
+  const TIP = {
+    max: "クリックで拡大・ドラッグでサイズ変更 / 点击放大·拖动调整大小 / Click to enlarge, drag to resize",
+    min: "クリックで元のサイズ・ドラッグでサイズ変更 / 点击还原·拖动调整大小 / Click to restore, drag to resize"
+  };
+  const grip = document.createElement("button");
+  grip.type = "button"; grip.className = "gb-grip"; grip.hidden = true;
+  document.body.appendChild(grip);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const limits = () => ({ maxW: Math.max(320, innerWidth - 170), maxH: Math.max(360, innerHeight - 40) });
+  let custom = false;                       /* true when a size is set (enlarged or dragged) */
+  function setIcon(){
+    grip.innerHTML = custom ? ICON_MIN : ICON_MAX;
+    grip.title = custom ? TIP.min : TIP.max;
+    grip.setAttribute("aria-label", custom ? "Restore chat window size" : "Enlarge chat window");
+  }
+  function apply(w, h, save){
+    const { maxW, maxH } = limits();
+    w = clamp(Math.round(w), 320, maxW); h = clamp(Math.round(h), 360, maxH);
+    root.style.setProperty("--gb-w", w + "px"); root.style.setProperty("--gb-h", h + "px");
+    custom = true; setIcon();
+    if (save) { try { localStorage.setItem(KEY, JSON.stringify([w, h])); } catch (e) {} }
+    place();
+  }
+  function reset(){
+    root.style.removeProperty("--gb-w"); root.style.removeProperty("--gb-h");
+    custom = false; setIcon();
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    place();
+  }
+  function enlarge(){ const { maxW } = limits(); apply(Math.min(760, maxW), innerHeight - 90, true); }   /* stays below the 60px header */
+  setIcon();
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (Array.isArray(s)) apply(s[0], s[1], false); } catch (e) {}
+  let frame = null;
+  function place(){
+    const open = frame && frame.style.display !== "none" && innerWidth >= 640;
+    grip.hidden = !open; if (!open) return;
+    const r = frame.getBoundingClientRect();
+    grip.style.left = r.left + "px"; grip.style.top = r.top + "px";
+  }
+  function hook(){
+    const f = document.getElementById("gptbase-bubble-window");
+    if (!f || f === frame) return;
+    frame = f;
+    new MutationObserver(() => requestAnimationFrame(place)).observe(f, { attributes: true, attributeFilter: ["style"] });
+    place();
+  }
+  new MutationObserver(hook).observe(document.body, { childList: true });
+  hook();
+  addEventListener("resize", () => requestAnimationFrame(place));
+  let start = null, moved = false;
+  grip.addEventListener("pointerdown", e => {
+    if (!frame || e.button) return;
+    e.preventDefault(); grip.setPointerCapture(e.pointerId);
+    const r = frame.getBoundingClientRect();
+    start = { x: e.clientX, y: e.clientY, w: r.width, h: r.height }; moved = false;
+  });
+  grip.addEventListener("pointermove", e => {
+    if (!start) return;
+    const dx = start.x - e.clientX, dy = start.y - e.clientY;
+    if (!moved && Math.hypot(dx, dy) < 5) return;   /* small wobble still counts as a click */
+    if (!moved) { moved = true; root.classList.add("gb-dragging"); }
+    apply(start.w + dx, start.h + dy, false);
+  });
+  grip.addEventListener("pointerup", () => {
+    if (!start) return; start = null; root.classList.remove("gb-dragging");
+    if (moved) { const r = frame.getBoundingClientRect(); apply(r.width, r.height, true); }
+    else if (custom) reset(); else enlarge();
+  });
+  grip.addEventListener("pointercancel", () => { start = null; root.classList.remove("gb-dragging"); });
+  grip.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); custom ? reset() : enlarge(); return; }
+    const d = { ArrowLeft:[20,0], ArrowRight:[-20,0], ArrowUp:[0,20], ArrowDown:[0,-20] }[e.key];
+    if (!d || !frame) return; e.preventDefault();
+    const r = frame.getBoundingClientRect(); apply(r.width + d[0], r.height + d[1], true);
+  });
 })();
 </script>
 
