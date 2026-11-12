@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>上野散歩 業務アシスタント</title>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#fff; --ink:#1d2330; --muted:#667085; --line:#e3e6eb;
+  --brand:#2f6fde; --brand-ink:#fff; --brand-soft:#e8f0fd;
+  --ok:#1f8a4c; --ok-soft:#e5f5ec; --warn:#b26a00; --warn-soft:#fff3dc; --bad:#c23a3a; --bad-soft:#fde8e8;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14171c; --panel:#1d2128; --ink:#e7eaf0; --muted:#98a2b3; --line:#2e343d;
+  --brand:#6b9cf0; --brand-ink:#0d1117; --brand-soft:#1d2a40;
+  --ok:#5cc58a; --ok-soft:#173225; --warn:#e3a84a; --warn-soft:#3a2c12; --bad:#ee7b7b; --bad-soft:#3d1c1c; }}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 "Yu Gothic UI","Microsoft YaHei UI",system-ui,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+header h1{font-size:17px;margin:0}
+header small{color:var(--muted)}
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.steps span{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.steps span.on{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+#banner{display:none;background:var(--warn-soft);color:var(--warn);padding:8px 16px;font-size:13px}
+nav{display:flex;gap:4px;padding:10px 16px 0}
+nav button{border:1px solid var(--line);border-bottom:none;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px 8px 0 0;cursor:pointer;font:inherit}
+nav button.on{background:var(--panel);color:var(--ink);font-weight:600}
+main{padding:0 16px 120px}
+.view{display:none;background:var(--panel);border:1px solid var(--line);border-radius:0 10px 10px 10px;padding:14px}
+.view.on{display:block}
+.split{display:grid;grid-template-columns:280px 1fr;gap:14px}
+@media (max-width:820px){.split{grid-template-columns:1fr}}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:8px 10px;cursor:pointer;font:inherit}
+.item.on{border-color:var(--brand);background:var(--brand-soft)}
+.item b{display:block;font-size:13px}
+.item small{color:var(--muted)}
+.tag{display:inline-block;font-size:11px;padding:0 7px;border-radius:99px;margin-right:4px;border:1px solid var(--line);color:var(--muted)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.tag.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.tag.info{background:var(--brand-soft);color:var(--brand);border-color:transparent}
+h2{font-size:15px;margin:4px 0 8px}
+h3{font-size:13px;margin:14px 0 6px;color:var(--muted);font-weight:600}
+pre.src{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0;max-height:260px;overflow:auto;font:13px/1.6 inherit}
+textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+textarea{min-height:200px;resize:vertical}
+textarea.short{min-height:60px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer;font:inherit}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);font-weight:600}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.warn{color:var(--warn);border-color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.checks label{display:flex;gap:8px;align-items:flex-start;padding:3px 0;cursor:pointer}
+.checks input{width:auto;margin-top:4px}
+.msg{font-size:13px;padding:7px 10px;border-radius:8px;margin-top:8px;display:none}
+.msg.show{display:block}
+.msg.ok{background:var(--ok-soft);color:var(--ok)} .msg.warn{background:var(--warn-soft);color:var(--warn)} .msg.bad{background:var(--bad-soft);color:var(--bad)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+td.final{max-width:360px;white-space:pre-wrap;font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);padding:20px 0;text-align:center}
+.hint{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>上野散歩 業務アシスタント</h1><small>邮件・会议业务助手 · GBase Agent · 研修用デモ（事务局・来信均为虚构）</small></div>
+  <div class="steps" id="steps">
+    <span data-s="1">① 选择任务</span><span data-s="2">② GBase 检索・草稿</span><span data-s="3">③ 人工审核</span><span data-s="4">④ 执行</span><span data-s="5">⑤ 记录</span>
+  </div>
+</header>
+<div id="banner"></div>
+<nav>
+  <button data-v="mail" class="on">📧 邮件收件箱</button>
+  <button data-v="meet">📝 会议记录</button>
+  <button data-v="log">📒 执行记录 <span id="logCount" class="tag">0</span></button>
+</nav>
+<main>
+  <section class="view on" id="v-work">
+    <div class="split">
+      <div><div class="list" id="list"></div>
+        <button class="btn" id="addCustom" style="margin-top:8px;width:100%">＋ 粘贴自己的邮件/会议记录</button>
+      </div>
+      <div id="detail">
+        <h2 id="d-title"></h2>
+        <div id="d-meta" class="hint"></div>
+        <h3>原文</h3>
+        <pre class="src" id="d-src"></pre>
+        <textarea id="d-src-edit" style="display:none" placeholder="在这里粘贴邮件正文或会议记录…"></textarea>
+        <div class="row">
+          <button class="btn primary" id="toGBase">② 交给 GBase Agent 生成草稿</button>
+          <button class="btn" id="copyPrompt">复制指令（手动粘贴用）</button>
+        </div>
+        <div class="msg" id="m-send"></div>
+
+        <h3>③ 人工审核 — 把 GBase 的草稿粘贴到这里，可直接修改</h3>
+        <textarea id="draft" placeholder="GBase 回答后，复制「回复草稿 / 会议纪要 + 跟进邮件」部分粘贴到这里。这里的内容就是审核后要执行的最终版本。"></textarea>
+        <div class="grid2" style="margin-top:8px">
+          <label>风险等级（依据 UENO-KB-004 第4节）
+            <select id="risk"><option value="">— 请选择 —</option><option>低</option><option>中</option><option>高</option></select></label>
+          <label>审核者<input id="reviewer" placeholder="姓名"></label>
+        </div>
+        <h3>审核清单</h3>
+        <div class="checks" id="checks"></div>
+        <label style="display:block;margin-top:8px">审核意见（退回时必填，会发给 GBase 重写）
+          <textarea class="short" id="comment" placeholder="例：第2段的价格请按年付重新计算；删除社内限的发言。"></textarea></label>
+        <div class="row">
+          <button class="btn ok" id="approve">✔ 批准并执行</button>
+          <button class="btn bad" id="reject">↩ 退回重写</button>
+          <button class="btn warn" id="escalate">⇪ 升级给上级</button>
+        </div>
+        <div class="msg" id="m-review"></div>
+
+        <div id="exec" style="display:none">
+          <h3>④ 执行</h3>
+          <div class="row" id="execBtns"></div>
+          <p class="hint">演示中不会自动发信：点击后会打开 Outlook 新邮件，由人发出。在 Bot 里配 API 以后，可改成自动登记。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-log">
+    <div class="row" style="margin:0 0 10px">
+      <button class="btn" id="exportCsv">导出 CSV</button>
+      <button class="btn bad" id="clearLog">清空记录</button>
+      <span class="hint">记录保存在本浏览器（localStorage），换电脑或清除浏览数据后不保留，需要留档请导出 CSV。</span>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>时间</th><th>类型</th><th>对象</th><th>动作</th><th>风险</th><th>审核者</th><th>意见</th><th>最终文本</th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table></div>
+  </section>
+</main>
+
+<script>
+/* ---------------- sample data (fictional) ---------------- */
+const ITEMS = [
+ {id:"M-01", kind:"mail", from:"中村 恵子 <nakamura.k@mail-demo.example>", company:"個人のお客様", subject:"来週月曜日、家族で上野に行きます", risk:"低",
+  body:"上野散歩 AI Guide 事務局 御中\n\nはじめまして。中村と申します。\n来週の月曜日（11月16日）に、母（68歳）と小学4年生・中学2年生の子ども2人を連れて上野に行く予定です。\n動物園と博物館に行きたいのですが、月曜日でも開いていますか。\n開いていない場合、月曜日におすすめの回り方があれば教えてください。\nそれぞれの入場料も知りたいです。\n\nよろしくお願いいたします。\n中村 恵子"},
+ {id:"M-02", kind:"mail", from:"刘 洋 <liu.yang@mail-demo.example>", company:"个人游客", subject:"周五晚上和年末去上野的问题", risk:"低",
+  body:"你好，\n\n我和朋友这周五（11月13日）下班后大概 18:00 到上野站，想去一个博物馆或美术馆，哪里开到晚上？\n另外不忍池的天鹅船多少钱？晚上还能坐吗？\n还有，我们 12 月 30 日还会再去一次，那天哪些地方开门？\n\n谢谢！\n刘洋"},
+ {id:"M-03", kind:"mail", from:"岡田 先生 <okada@chuo-jhs-demo.example>", company:"中央中学校（架空）", subject:"修学旅行での散策ガイドのご依頼", risk:"中",
+  body:"上野散歩 AI Guide 事務局 ご担当者様\n\n中央中学校 2 年担任の岡田と申します。\n12 月 3 日（木）の修学旅行で、生徒 38 名・引率教員 2 名の計 40 名で上野を訪れます。\n午前中 2 時間ほど、散策ガイドをお願いできますでしょうか。\nその後、国立西洋美術館の常設展を見学したいと考えています。団体の予約や料金についても教えてください。\n雨の場合の対応も知りたいです。\n\n中央中学校 岡田"},
+ {id:"M-04", kind:"mail", from:"森田 <morita@sakura-travel-demo.example>", company:"さくらトラベル（架空）", subject:"Re: 団体ガイドのお見積り（料金・キャンセルのご相談）", risk:"高",
+  body:"上野散歩 AI Guide 事務局 様\n\nお見積りありがとうございます。\n来年 3 月下旬の桜の時期に、ガイド付きツアーを 4 回（各 30 名）実施したいと考えております。\n回数が多いので、ガイド料金を 30% 割引していただけないでしょうか。\nまた、桜が満開でなかった場合はキャンセル料なしで日程変更できるようにしていただきたいです。\n満開の時期に確実に開催できる日程もご提案いただけますと助かります。\n\nさくらトラベル 森田"},
+ {id:"G-01", kind:"meet", company:"アメ横 某商店会（架空）", subject:"食べ歩きマップ連携の打合せ", risk:"中", external:true,
+  body:"2026-11-12（木）15:00-16:00 オンライン\n参加：商店会 佐々木様（架空）／事務局 陳・高橋\n\n陳：AI Guide で紹介しているグルメ情報を、商店会の食べ歩きマップと連携したいと考えています。\n佐々木様：いいですね。掲載店舗のリストは商店会から出せます。11 月 20 日までにお送りします。\n高橋：店舗情報は営業時間が変わりやすいので、AI では「訪問前に確認」と必ず案内します。\n佐々木様：それで問題ありません。\n佐々木様：中国語版のマップも作れますか。\n陳：AI Guide 側は中国語対応済みです。マップの翻訳は…社内で確認して後日ご連絡します。\n佐々木様：クーポン掲載はできますか。\n高橋：クーポンは検討させてください。\n【社内限】陳：クーポンは運用負荷が大きいので、たぶん断る方向。\n陳：次回は 11 月 27 日（金）15 時、リストを見ながら掲載内容を決めましょう。\n佐々木様：承知しました。"},
+ {id:"G-02", kind:"meet", company:"事務局（社内）", subject:"週次定例：AI Guide 運用", risk:"低", external:false,
+  body:"2026-11-10（月）10:00-10:30 会議室B\n参加：事務局長 森、陳、李、高橋\n\n李：先週の AI Guide への質問は 120 件。開館時間と料金の質問が全体の約 4 割。\n高橋：KB-003 を 11 月 11 日に作って GBase に学習済み。テスト質問 10 件はまだ未実施。\n森：テスト 10 件は陳さん、今週金曜までに結果をまとめてください。\n陳：了解です。\n李：東京都美術館が 12 月 21〜28 日に整備休館なので、年末の質問が増えそうです。\n森：KB-003 の年末年始の部分、李さんがもう一度公式サイトと照合して。来週中に。\n高橋：音声入力が一度使えなかった件、原因はまだ不明です。\n森：それは様子見で。\n陳：メール返信の AI 下書き、来週の定例でデモします。\n森：次回は 11 月 17 日同じ時間。"}
+];
+const CHECKS = {
+ mail:[["E1","回复里的每个事实（时间、票价、费用）都能在 UENO-KB-001〜004 找到出处"],["E2","开放时间・票价注明了「截至 2026 年 11 月」并提醒查看官网"],["E3","没有知识库以外的承诺（保证开放・花期、代订、折扣、取消减免，UENO-KB-004 第4节）"],["E4","[要确认] 已全部补全或删除"],["E5","收件人・宛名・语言正确"]],
+ meet:[["C1","决定事项都是会议中明确合意的（「検討」「後日連絡」不算）"],["C2","每个待办都有负责人和期限"],["C3","设施信息・费用与 UENO-KB-003 / 004 一致"],["C4","发给社外的内容已删除【社内限】和个人信息"],["C5","收件人・抄送正确"]]
+};
+const ESCALATE = {高:"事務局長", 中:"リーダー", 低:"リーダー"};
+
+/* ---------------- state ---------------- */
+const LS_STATE="mma-state-v1", LS_LOG="mma-log-v1";
+function load(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+let state = load(LS_STATE,{});      /* id -> {status, draft, risk, reviewer, comment, checks:{}, custom?} */
+let log = load(LS_LOG,[]);
+let customs = load("mma-custom-v1",[]);
+let view="mail", cur=null;
+const $=s=>document.querySelector(s);
+const STATUS = {new:["待处理",""], drafting:["草稿中","info"], rejected:["退回重写","bad"], escalated:["已升级","warn"], done:["已执行","ok"]};
+function st(id){ return state[id] || (state[id]={status:"new",draft:"",risk:"",reviewer:"",comment:"",checks:{}}); }
+function allItems(){ return ITEMS.concat(customs); }
+function esc(s){ return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------------- render ---------------- */
+function steps(n){ document.querySelectorAll("#steps span").forEach(s=>s.classList.toggle("on", +s.dataset.s===n)); }
+function renderList(){
+  const items = allItems().filter(i=>i.kind===view);
+  $("#list").innerHTML = items.map(i=>{ const s=st(i.id), [t,c]=STATUS[s.status];
+    return `<button class="item ${cur&&cur.id===i.id?"on":""}" data-id="${i.id}"><b>${esc(i.subject)}</b><small>${esc(i.company)}</small><br><span class="tag ${c}">${t}</span>${i.risk?`<span class="tag">参考风险 ${i.risk}</span>`:""}</button>`; }).join("") || `<div class="empty">没有项目</div>`;
+  $("#addCustom").textContent = view==="mail" ? "＋ 粘贴自己的邮件" : "＋ 粘贴自己的会议记录";
+}
+function renderDetail(){
+  const d=$("#detail");
+  if(!cur){ d.style.visibility="hidden"; steps(1); return; }
+  d.style.visibility="visible";
+  const s=st(cur.id);
+  $("#d-title").textContent = cur.subject;
+  $("#d-meta").textContent = cur.kind==="mail" ? `差出人：${cur.from||"—"}　｜　${cur.company}` : `${cur.external?"社外会议":"社内会议"}　｜　${cur.company}`;
+  const editable = !!cur.custom;
+  $("#d-src").style.display = editable?"none":"block"; $("#d-src-edit").style.display = editable?"block":"none";
+  $("#d-src").textContent = cur.body; if(editable) $("#d-src-edit").value = cur.body;
+  $("#draft").value = s.draft; $("#risk").value = s.risk; $("#reviewer").value = s.reviewer || load("mma-reviewer","");
+  $("#comment").value = s.comment;
+  $("#checks").innerHTML = CHECKS[cur.kind].map(([k,t])=>`<label><input type="checkbox" data-k="${k}" ${s.checks[k]?"checked":""}> <span><b>${k}</b> ${t}</span></label>`).join("");
+  ["#m-send","#m-review"].forEach(m=>$(m).className="msg");
+  showExec(s.status==="done");
+  steps(s.status==="done"?5 : s.draft?3 : s.status==="drafting"?2 : 1);
+}
+function renderLog(){
+  $("#logCount").textContent = log.length;
+  $("#logBody").innerHTML = log.slice().reverse().map(r=>`<tr><td>${esc(r.time)}</td><td>${r.kind==="mail"?"邮件":"会议"}</td><td>${esc(r.subject)}<br><small class="hint">${esc(r.itemId)}</small></td><td><span class="tag ${ {批准执行:"ok",退回重写:"bad",升级:"warn",发给GBase:"info"}[r.action]||""}">${esc(r.action)}</span>${r.to?`<br><small class="hint">→ ${esc(r.to)}</small>`:""}</td><td>${esc(r.risk)}</td><td>${esc(r.reviewer)}</td><td>${esc(r.comment)}</td><td class="final">${esc((r.final||"").slice(0,240))}${(r.final||"").length>240?"…":""}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">还没有记录</td></tr>`;
+}
+function renderAll(){ renderList(); renderDetail(); renderLog(); }
+
+/* ---------------- GBase bridge (postMessage interface of plugin.js, same as Ueno demo) ---------------- */
+function sendToGBase(q){
+  const f=document.getElementById("gptbase-bubble-window"), b=document.getElementById("gptbase-bubble-button");
+  if(!f||!b||!f.contentWindow) return false;
+  let origin; try{ origin=new URL(f.src).origin; }catch(e){ return false; }
+  const wasClosed = f.style.display==="none";
+  if(wasClosed) b.click();
+  setTimeout(()=>f.contentWindow.postMessage({type:"send",question:q},origin), wasClosed?400:0);
+  return true;
+}
+function buildPrompt(){
+  if(cur.custom) cur.body = $("#d-src-edit").value.trim();
+  return cur.kind==="mail"
+    ? `【邮件回复】\n件名：${cur.subject}\n差出人：${cur.from||"[要确认]"}（${cur.company}）\n本文：\n${cur.body}`
+    : `【会后整理】\n会议名：${cur.subject}\n种类：${cur.external?"社外会议（需要跟进邮件）":"社内会议（不需要跟进邮件）"}\n记录：\n${cur.body}`;
+}
+function msg(el,cls,text){ const m=$(el); m.className="msg show "+cls; m.textContent=text; }
+async function copy(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ return false; } }
+
+/* ---------------- logging ---------------- */
+function addLog(action, extra){
+  const s=st(cur.id);
+  log.push(Object.assign({time:new Date().toLocaleString("ja-JP",{hour12:false}), itemId:cur.id, kind:cur.kind, subject:cur.subject, action, risk:s.risk, reviewer:s.reviewer, comment:s.comment, final:""}, extra||{}));
+  save(LS_LOG,log); renderLog();
+}
+function persist(){ save(LS_STATE,state); if(cur&&cur.custom) save("mma-custom-v1",customs); }
+
+/* ---------------- actions ---------------- */
+$("nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  if(b.dataset.v==="log"){ $("#v-work").classList.remove("on"); $("#v-log").classList.add("on"); return; }
+  $("#v-log").classList.remove("on"); $("#v-work").classList.add("on");
+  view=b.dataset.v; cur=allItems().find(i=>i.kind===view)||null; renderAll(); });
+$("#list").addEventListener("click",e=>{ const b=e.target.closest(".item"); if(!b) return; cur=allItems().find(i=>i.id===b.dataset.id); renderAll(); });
+$("#addCustom").onclick=()=>{
+  const n=customs.filter(c=>c.kind===view).length+1;
+  const it = view==="mail" ? {id:"MC-"+String(n).padStart(2,"0"),kind:"mail",from:"",company:"（自定义）",subject:"自定义邮件 "+n,body:"",custom:true}
+                          : {id:"GC-"+String(n).padStart(2,"0"),kind:"meet",company:"（自定义）",subject:"自定义会议 "+n,body:"",custom:true,external:confirm("这是社外会议吗？（需要跟进邮件）")};
+  customs.push(it); save("mma-custom-v1",customs); cur=it; renderAll(); $("#d-src-edit").focus(); };
+
+$("#toGBase").onclick=()=>{
+  const q=buildPrompt(); if(!cur.body){ msg("#m-send","warn","请先粘贴原文。"); return; }
+  const s=st(cur.id); if(s.status==="new"||s.status==="rejected") s.status="drafting"; persist();
+  addLog("发给GBase",{final:q});
+  if(sendToGBase(q)){ msg("#m-send","ok","已发送给右下角的 GBase Agent。它会检索知识库并写出草稿，回答出来后复制草稿，粘贴到下面的审核栏。"); }
+  else { copy(q).then(ok=>msg("#m-send","warn", ok?"GBase 聊天窗口还没加载（或未配置 Bot ID）。指令已复制，请到 GBase 里粘贴发送。":"GBase 聊天窗口还没加载，请点「复制指令」后手动粘贴。")); }
+  renderList(); steps(2); };
+$("#copyPrompt").onclick=()=>copy(buildPrompt()).then(ok=>msg("#m-send",ok?"ok":"bad",ok?"指令已复制。":"复制失败，请手动选择原文复制。"));
+
+["#draft","#risk","#reviewer","#comment"].forEach(sel=>$(sel).addEventListener("input",()=>{
+  const s=st(cur.id); s.draft=$("#draft").value; s.risk=$("#risk").value; s.reviewer=$("#reviewer").value; s.comment=$("#comment").value;
+  if(sel==="#reviewer") save("mma-reviewer",s.reviewer);
+  if(sel==="#draft" && s.draft && s.status==="new") s.status="drafting";
+  persist(); if(sel==="#draft") steps(s.draft?3:2); }));
+$("#checks").addEventListener("change",e=>{ const k=e.target.dataset.k; if(!k) return; st(cur.id).checks[k]=e.target.checked; persist(); });
+$("#d-src-edit").addEventListener("input",()=>{ cur.body=$("#d-src-edit").value; save("mma-custom-v1",customs); });
+
+$("#approve").onclick=()=>{
+  const s=st(cur.id), probs=[];
+  if(!s.draft.trim()) probs.push("审核栏还没有草稿");
+  if(/\[要确认\]|［要确认］|\[要確認\]|［要確認］/.test(s.draft)) probs.push("草稿里还有 [要确认]");
+  if(!s.risk) probs.push("未选择风险等级");
+  if(!s.reviewer.trim()) probs.push("未填写审核者");
+  const miss=CHECKS[cur.kind].filter(([k])=>!s.checks[k]).map(([k])=>k); if(miss.length) probs.push("清单未勾选："+miss.join("、"));
+  if(s.risk==="高") probs.push("高风险不能由本人批准，请点「升级给上级」");
+  if(probs.length){ msg("#m-review","bad","不能批准："+probs.join("；")); return; }
+  s.status="done"; persist(); addLog("批准执行",{final:s.draft});
+  msg("#m-review","ok","已批准，已写入执行记录。请在下方执行。"); showExec(true); renderList(); steps(4); };
+$("#reject").onclick=()=>{
+  const s=st(cur.id);
+  if(!s.comment.trim()){ msg("#m-review","bad","退回时请填写审核意见，GBase 会按意见重写。"); return; }
+  s.status="rejected"; persist(); addLog("退回重写",{final:s.draft});
+  const q=`【重写】\n审核意见：${s.comment}\n上一版草稿：\n${s.draft||"（见上一条回答）"}`;
+  if(sendToGBase(q)) msg("#m-review","warn","已退回，审核意见已发给 GBase 重写。新草稿出来后覆盖粘贴到审核栏。");
+  else copy(q).then(()=>msg("#m-review","warn","已退回并记录。GBase 未加载，重写指令已复制，请手动粘贴。"));
+  renderList(); };
+$("#escalate").onclick=()=>{
+  const s=st(cur.id); if(!s.risk){ s.risk=cur.risk||"中"; $("#risk").value=s.risk; } const to=ESCALATE[s.risk];
+  s.status="escalated"; persist(); addLog("升级",{to, final:s.draft});
+  msg("#m-review","warn",`已升级给「${to}」并写入记录。演示中请把草稿和记录转给对方确认。`); renderList(); };
+
+function showExec(on){
+  $("#exec").style.display=on?"block":"none"; if(!on) return;
+  const s=st(cur.id), btns=[];
+  if(cur.kind==="mail"){
+    const to=(cur.from||"").match(/<([^>]+)>/); btns.push(`<button class="btn primary" data-x="mail" data-to="${to?to[1]:""}" data-sub="Re: ${esc(cur.subject)}">用 Outlook 打开回复邮件</button>`);
+  } else {
+    if(cur.external) btns.push(`<button class="btn primary" data-x="mail" data-to="" data-sub="【議事録】${esc(cur.subject)}">用 Outlook 打开跟进邮件</button>`);
+    btns.push(`<button class="btn" data-x="txt">下载会议纪要 .txt</button>`);
+  }
+  btns.push(`<button class="btn" data-x="copy">复制最终文本</button>`);
+  $("#execBtns").innerHTML=btns.join("");
+}
+$("#execBtns").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; const s=st(cur.id);
+  if(b.dataset.x==="mail"){ location.href=`mailto:${b.dataset.to}?subject=${encodeURIComponent(b.dataset.sub)}&body=${encodeURIComponent(s.draft.slice(0,1800))}`; addLog("执行：打开邮件",{to:b.dataset.to||"（手动填写）",final:s.draft}); }
+  if(b.dataset.x==="txt"){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+s.draft],{type:"text/plain"})); a.download=`${cur.id}_議事録.txt`; a.click(); addLog("执行：下载纪要",{final:s.draft}); }
+  if(b.dataset.x==="copy"){ copy(s.draft).then(ok=>msg("#m-review",ok?"ok":"bad",ok?"已复制。":"复制失败。")); }
+  steps(5); });
+
+$("#exportCsv").onclick=()=>{
+  const cols=["time","itemId","kind","subject","action","to","risk","reviewer","comment","final"];
+  const csv=[cols.join(",")].concat(log.map(r=>cols.map(c=>`"${String(r[c]??"").replace(/"/g,'""')}"`).join(","))).join("\r\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"})); a.download="执行记录_"+new Date().toISOString().slice(0,10)+".csv"; a.click(); };
+$("#clearLog").onclick=()=>{ if(!confirm("清空所有执行记录和处理状态？（建议先导出 CSV）")) return; log=[]; state={}; save(LS_LOG,log); save(LS_STATE,state); renderAll(); };
+
+cur=ITEMS[0]; renderAll();
+</script>
+
+<!-- ============================================================
+     GBase 嵌入代码：把 YOUR_BOT_ID 换成新 Bot 的 chatbotId（后台「WEBサイトへの埋め込み」）
+     ============================================================ -->
+<script>
+(function(){
+  const BOT_ID = '62cfca51-e096-4d4f-9921-29d4e03aa079';
+  if (BOT_ID === 'YOUR_BOT_ID') {
+    const b=document.getElementById("banner"); b.style.display="block";
+    b.textContent="尚未配置 GBase Bot ID：现在可以用「复制指令」手动粘贴到 GBase 来演示。配置后右下角会出现 GBase Agent。";
+    return;
+  }
+  window.gptbaseConfig = { chatbotId: BOT_ID, baseUrl: 'https://admin.gbase.ai', apiBaseUrl: 'https://admin.gbase.ai/api' };
+  const s=document.createElement("script"); s.src="https://gbase.ai/plugin/plugin.js"; s.id=BOT_ID; s.defer=true; document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
