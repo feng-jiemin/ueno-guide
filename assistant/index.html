@@ -99,6 +99,16 @@ td.final{max-width:360px;white-space:pre-wrap;font-size:12px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.mascot .m-img,.mascot .say{animation:none}}
 main{padding-bottom:190px}
 @media (min-width:900px){main,nav{padding-right:150px}}
+.numcheck{margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg)}
+.numcheck h4{margin:0 0 6px;font-size:13px}
+.numcheck .nr{display:grid;grid-template-columns:22px 92px 1fr;gap:6px;align-items:start;font-size:12.5px;padding:4px 0;border-top:1px dashed var(--line)}
+.numcheck .nr:first-of-type{border-top:0}
+.numcheck .ic{font-weight:700;text-align:center;border-radius:6px}
+.nr.ok .ic{color:var(--ok)} .nr.other .ic{color:var(--warn)} .nr.miss .ic{color:var(--bad)} .nr.neutral .ic{color:var(--muted)}
+.nr .v{font-weight:600} .nr.other .v{color:var(--warn)} .nr.miss .v{color:var(--bad)}
+.nr .ctx{color:var(--muted)} .nr .kb{display:block;color:var(--ink)}
+.numcheck .ack{display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:13px;color:var(--warn)}
+.numcheck .ack input{width:auto;margin-top:3px}
 </style>
 </head>
 <body>
@@ -134,6 +144,7 @@ main{padding-bottom:190px}
 
         <h3>③ 人工审核 — 把 GBase 的草稿粘贴到这里，可直接修改</h3>
         <textarea id="draft" placeholder="GBase 回答后，复制「回复草稿 / 会议纪要 + 跟进邮件」部分粘贴到这里。这里的内容就是审核后要执行的最终版本。"></textarea>
+        <div class="numcheck" id="numcheck"></div>
         <div class="grid2" style="margin-top:8px">
           <label>风险等级（依据 UENO-KB-004 第4节）
             <select id="risk"><option value="">— 请选择 —</option><option>低</option><option>中</option><option>高</option></select></label>
@@ -235,7 +246,7 @@ function renderDetail(){
   $("#comment").value = s.comment;
   $("#checks").innerHTML = CHECKS[cur.kind].map(([k,t])=>`<label><input type="checkbox" data-k="${k}" ${s.checks[k]?"checked":""}> <span><b>${k}</b> ${t}</span></label>`).join("");
   ["#m-send","#m-review"].forEach(m=>$(m).className="msg");
-  showExec(s.status==="done");
+  showExec(s.status==="done"); renderNumcheck();
   steps(s.status==="done"?5 : s.draft?3 : s.status==="drafting"?2 : 1);
 }
 function renderLog(){
@@ -243,6 +254,62 @@ function renderLog(){
   $("#logBody").innerHTML = log.slice().reverse().map(r=>`<tr><td>${esc(r.time)}</td><td>${r.kind==="mail"?"邮件":"会议"}</td><td>${esc(r.subject)}<br><small class="hint">${esc(r.itemId)}</small></td><td><span class="tag ${ {批准执行:"ok",退回重写:"bad",升级:"warn",发给GBase:"info"}[r.action]||""}">${esc(r.action)}</span>${r.to?`<br><small class="hint">→ ${esc(r.to)}</small>`:""}</td><td>${esc(r.risk)}</td><td>${esc(r.reviewer)}</td><td>${esc(r.comment)}</td><td class="final">${esc((r.final||"").slice(0,240))}${(r.final||"").length>240?"…":""}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">还没有记录</td></tr>`;
 }
 function renderAll(){ renderList(); renderDetail(); renderLog(); }
+
+/* ---------------- 数字核对：草稿里的金额・时间 ↔ UENO-KB-001〜005 ---------------- */
+let NUM_BAD = "";
+const KB_FACTS = {"yen": {"1000": [{"kb": "KB-003", "t": "东京国立博物馆（東京国立博物館） · 门票（综合文化展＝馆藏展）：成人 1,000 日元；大学生 500 日元；高中生及以下、未"}, {"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · 2025 年 10 月起另售「附捐款入馆券」1,000 日元（入馆费 630 日元＋捐款 370 日"}, {"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · 800 日元（最多成人 3 人）；脚踏船 1,000 日元（成人 2 人＋儿童 1 人）；天鹅船"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · 周一休馆（逢节假日则次日休馆）。常设展成人 1,000 日元，大学生 500 日元，高中生及以下和"}], "500": [{"kb": "KB-003", "t": "东京国立博物馆（東京国立博物館） · ＝馆藏展）：成人 1,000 日元；大学生 500 日元；高中生及以下、未满 18 岁、70 岁以上"}, {"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · 门票（常设展）：成人 500 日元（团体 400 日元）；大学生 250 日元"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · 馆）。常设展成人 1,000 日元，大学生 500 日元，高中生及以下和 70 岁以上免费。特展另行"}], "630": [{"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · 门票（常设展）：成人・大学生 630 日元（20 人以上团体 510 日元）；高中生及"}], "510": [{"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · 人・大学生 630 日元（20 人以上团体 510 日元）；高中生及以下、未满 18 岁免费；65"}], "370": [{"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · ,000 日元（入馆费 630 日元＋捐款 370 日元）。特展另行收费。"}], "400": [{"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · 门票（常设展）：成人 500 日元（团体 400 日元）；大学生 250 日元（团体 200 日元"}], "250": [{"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · 500 日元（团体 400 日元）；大学生 250 日元（团体 200 日元）；高中生及以下、未满"}], "200": [{"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · 400 日元）；大学生 250 日元（团体 200 日元）；高中生及以下、未满 18 岁、65 岁以"}, {"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 300 日元（团体 240 日元）；初中生 200 日元（团体 160 日元，在东京都内居住或就学的"}, {"kb": "KB-003", "t": "儿童和老年人的优惠（子ども・シニアの割引） · 下免费；上野动物园小学生及以下免费，初中生 200 日元。"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · 下免费；上野动物园小学生及以下免费，初中生 200 日元。特展可能另行收费。"}], "600": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 门票：成人 600 日元（20 人以上团体 480 日元）；65 岁"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 元；小学生 300 日元；20 人以上团体 600 日元。社殿内部不对外开放。"}], "480": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 门票：成人 600 日元（20 人以上团体 480 日元）；65 岁以上 300 日元（团体 240"}], "300": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 人以上团体 480 日元）；65 岁以上 300 日元（团体 240 日元）；初中生 200 日元"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · ）：成人（初中生以上）700 日元；小学生 300 日元；20 人以上团体 600 日元。社殿内部不"}, {"kb": "KB-003", "t": "儿童和老年人的优惠（子ども・シニアの割引） · 65 岁以上免费；上野动物园 65 岁以上 300 日元。均需出示年龄证明。"}], "240": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 日元）；65 岁以上 300 日元（团体 240 日元）；初中生 200 日元（团体 160 日元"}], "160": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 240 日元）；初中生 200 日元（团体 160 日元，在东京都内居住或就学的初中生免费，需证明）"}], "2400": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 手册者及 1 名陪同者免费。另有年票：成人 2,400 日元，65 岁以上 1,200 日元。"}], "1200": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 年票：成人 2,400 日元，65 岁以上 1,200 日元。"}], "700": [{"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 门票（透塀内）：成人（初中生以上）700 日元；小学生 300 日元；20 人以上团体 6"}], "800": [{"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · 费用（均为 30 分钟）：手划船 800 日元（最多成人 3 人）；脚踏船 1,000 日"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · A（中文）：均为 30 分钟：手划船 800 日元，脚踏船和天鹅船各 1,000 日元。12"}], "15000": [{"kb": "KB-004", "t": "项目 / 項目 | 内容 · 费用 / 料金 | 导游 1 名 15,000 日元（税込）。设施门票由参加者自付 / 施"}]}, "time": {"9:30": [{"kb": "KB-003", "t": "东京国立博物馆（東京国立博物館） · 中文：开放时间：9:30–17:00，闭馆前 30 分钟停止入馆。每周五"}, {"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · 中文：开放时间：9:30–17:30；每周五、周六 9:30–20:00"}, {"kb": "KB-003", "t": "东京都美术馆（東京都美術館） · 中文：开放时间：9:30–17:30（闭馆前 30 分钟停止入馆）。特展"}, {"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 中文：开放时间：9:30–17:00。入园和售票截至 16:00。部分动"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 参观透塀内侧（收费）：10 月至 2 月 9:30–16:00；3 月至 9 月 9:30–17:"}, {"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · 10:00–18:20；10 月和 3 月 9:30–17:20；11 月至 2 月 9:30–16"}], "17:00": [{"kb": "KB-003", "t": "东京国立博物馆（東京国立博物館） · 中文：开放时间：9:30–17:00，闭馆前 30 分钟停止入馆。每周五、周六开放"}, {"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · 中文：开放时间：9:00–17:00（16:30 停止入馆）。没有固定的夜间开放。"}, {"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 中文：开放时间：9:30–17:00。入园和售票截至 16:00。部分动物馆会提前"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 0–16:00；3 月至 9 月 9:30–17:00。"}, {"kb": "KB-003", "t": "清水观音堂（寛永寺 清水観音堂） · 中文：开门时间：9:00–17:00。官方曾公告堂内关闭时间改为 16:00，请以"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · 026 年 11 月，开放时间为 9:30–17:00，周五、周六至 20:00，周一休馆（逢节假日"}], "20:00": [{"kb": "KB-003", "t": "东京国立博物馆（東京国立博物館） · 前 30 分钟停止入馆。每周五、周六开放至 20:00；若下周一为节假日，前一天的周日也开放至 20"}, {"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · :30–17:30；每周五、周六 9:30–20:00。闭馆前 30 分钟停止入馆。"}, {"kb": "KB-003", "t": "东京都美术馆（東京都美術館） · 入馆）。特展、企划展举办期间，每周五开放至 20:00。"}, {"kb": "KB-003", "t": "晚上也能参观的设施（夜も楽しめる施設） · 中文：每周五、周六开放至 20:00 的有东京国立博物馆和国立西洋美术馆。东京都美"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · 时间为 9:30–17:00，周五、周六至 20:00，周一休馆（逢节假日则次日休馆）。常设展成人"}], "12:00": [{"kb": "KB-003", "t": "东京国立博物馆（東京国立博物館） · 黑田纪念馆）。2027 年 1 月 1 日 12:00–20:00 开馆。"}, {"kb": "KB-003", "t": "2026–2027 年末年始（2026〜2027年の年末年始） · /26–12/31 休馆，2027/1/1 12:00 起开馆。国立科学博物馆、国立西洋美术馆：12"}], "9:00": [{"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · 中文：开放时间：9:00–17:00（16:30 停止入馆）。没有固定的"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 中文：境内参拜（免费）：10 月至 2 月 9:00–16:30；3 月至 9 月 9:00–17:"}, {"kb": "KB-003", "t": "清水观音堂（寛永寺 清水観音堂） · 中文：开门时间：9:00–17:00。官方曾公告堂内关闭时间改为 16:"}], "16:30": [{"kb": "KB-003", "t": "国立科学博物馆（国立科学博物館・上野本館） · 中文：开放时间：9:00–17:00（16:30 停止入馆）。没有固定的夜间开放。"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 参拜（免费）：10 月至 2 月 9:00–16:30；3 月至 9 月 9:00–17:30。天气"}], "17:30": [{"kb": "KB-003", "t": "国立西洋美术馆（国立西洋美術館） · 中文：开放时间：9:30–17:30；每周五、周六 9:30–20:00。闭馆前"}, {"kb": "KB-003", "t": "东京都美术馆（東京都美術館） · 中文：开放时间：9:30–17:30（闭馆前 30 分钟停止入馆）。特展、企划展举"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 0–16:30；3 月至 9 月 9:00–17:30。天气恶劣时可能关门。"}], "16:00": [{"kb": "KB-003", "t": "上野动物园（恩賜上野動物園） · 时间：9:30–17:00。入园和售票截至 16:00。部分动物馆会提前结束参观。"}, {"kb": "KB-003", "t": "上野东照宫（上野東照宮） · 内侧（收费）：10 月至 2 月 9:30–16:00；3 月至 9 月 9:30–17:00。"}, {"kb": "KB-003", "t": "清水观音堂（寛永寺 清水観音堂） · 0–17:00。官方曾公告堂内关闭时间改为 16:00，请以官方最新信息为准。"}, {"kb": "KB-003", "t": "四、游客常见问题 FAQ / 4. よくある質問 · 的开园日历。开园时间 9:30–17:00，16:00 停止入园。"}], "5:00": [{"kb": "KB-003", "t": "上野恩赐公园（上野恩賜公園） · 中文：开放时间：5:00–23:00，其他时间禁止进入（依据东京都建设局"}, {"kb": "KB-003", "t": "西乡隆盛像（西郷隆盛像） · 户外，免费，无需预约，可在上野公园开放时间（5:00–23:00）内参观。"}], "23:00": [{"kb": "KB-003", "t": "上野恩赐公园（上野恩賜公園） · 中文：开放时间：5:00–23:00，其他时间禁止进入（依据东京都建设局）。"}, {"kb": "KB-003", "t": "西乡隆盛像（西郷隆盛像） · ，无需预约，可在上野公园开放时间（5:00–23:00）内参观。"}, {"kb": "KB-003", "t": "晚上也能参观的设施（夜も楽しめる施設） · 野动物园没有固定的夜间开放。上野公园开放至 23:00。"}], "10:00": [{"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · 受理为结束前 1 小时）：4 月至 9 月 10:00–17:50；8 月 1 日至 8 月第 3"}, {"kb": "KB-003", "t": "清水观音堂（寛永寺 清水観音堂） · 活动：每月 17 日 10:00 举行缘日法会。"}, {"kb": "KB-004", "t": "项目 / 項目 | 内容 · 受理时间 / 受付時間 | 平日 10:00–18:00（土日祝・12/29–1/3 休み"}], "17:50": [{"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · 1 小时）：4 月至 9 月 10:00–17:50；8 月 1 日至 8 月第 3 个周日 10"}], "18:20": [{"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · 1 日至 8 月第 3 个周日 10:00–18:20；10 月和 3 月 9:30–17:20；1"}], "17:20": [{"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · –18:20；10 月和 3 月 9:30–17:20；11 月至 2 月 9:30–16:50。"}], "16:50": [{"kb": "KB-003", "t": "不忍池划船场（不忍池ボート場） · –17:20；11 月至 2 月 9:30–16:50。"}], "18:00": [{"kb": "KB-004", "t": "项目 / 項目 | 内容 · 理时间 / 受付時間 | 平日 10:00–18:00（土日祝・12/29–1/3 休み）"}]}};
+const FAC = [
+ ["东京国立博物馆",["东京国立博物馆","東京国立博物館","东博","東博","综合文化展","総合文化展"]],
+ ["国立科学博物馆",["国立科学博物馆","国立科学博物館","科学博物馆","科学博物館","科博"]],
+ ["国立西洋美术馆",["国立西洋美术馆","国立西洋美術館","西洋美术馆","西洋美術館"]],
+ ["东京都美术馆",["东京都美术馆","東京都美術館"]],
+ ["上野动物园",["动物园","動物園"]],
+ ["不忍池划船场",["划船","ボート","天鹅船","天鹅","スワン","脚踏船","手划船","サイクルボート","ローボート"]],
+ ["上野东照宫",["东照宫","東照宮"]],
+ ["清水观音堂",["清水观音堂","清水観音堂"]],
+ ["西乡隆盛像",["西乡","西郷"]],
+ ["上野公园",["上野恩赐公园","上野恩賜公園","上野公园","上野公園"]],
+ ["阿美横丁",["阿美横","アメ横"]],
+ ["团体导游（S-02）",["导游","ガイド料","散策ガイド","ガイド 1 名","ガイド1名"]]
+];
+const facOf = t => FAC.filter(([,ns]) => ns.some(n => t.includes(n))).map(([k]) => k);
+const z2h = t => t.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/：/g, ":");
+function numberCheck(text){
+  const lines = z2h(text||"").split(/\n/), out = [], seen = new Set(); let head = "";
+  for (const line of lines){
+    if (/[【■]|^\s*[^\s].{0,24}[：:]\s*$/.test(line)) head = line;
+    let f = facOf(line); if (!f.length) f = facOf(head);
+    const hits = [];
+    for (const m of line.matchAll(/(\d{1,3}(?:,\d{3})+|\d+)\s*(?:日元|円)/g)) hits.push(["yen", m[1].replace(/,/g,""), m[0].trim(), m.index]);
+    for (const m of line.matchAll(/(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])/g)) hits.push(["time", `${+m[1]}:${m[2]}`, m[0], m.index]);
+    for (const [kind, key, raw, pos] of hits){
+      const sig = kind + key + "|" + f.join(","); if (seen.has(sig)) continue; seen.add(sig);
+      const refs = (KB_FACTS[kind][key] || []).map(r => ({...r, fac: facOf(r.t)}));
+      const ctx = line.slice(Math.max(0,pos-18), pos+raw.length+12).trim();
+      let st, note;
+      if (!refs.length){ st = "miss"; note = kind === "yen" ? "知识库里没有这个金额（如果是合计，请自己核算）" : "知识库里没有这个时间（如果是客人的到达时间等，请确认）"; }
+      else if (!f.length){ st = "neutral"; note = "知识库里有，但这一行看不出是哪个设施。例：" + refs[0].kb + "：" + refs[0].t.slice(0,60); }
+      else { const same = refs.filter(r => r.fac.some(x => f.includes(x)));
+        if (same.length){ st = "ok"; note = same[0].kb + "：" + same[0].t; }
+        else { st = "other"; note = "知识库里这个数字属于「" + ([...new Set(refs.flatMap(r => r.fac))].join("・") || refs[0].t.split(" · ")[0]) + "」，不是「" + f.join("・") + "」。" + refs[0].kb + "：" + refs[0].t; } }
+      out.push({st, raw, ctx, note, sig});
+    }
+  }
+  return out;
+}
+function renderNumcheck(){
+  const box = document.getElementById("numcheck"); if (!cur){ box.innerHTML=""; return; }
+  const s = st(cur.id), items = numberCheck(s.draft);
+  if (!s.draft.trim()){ box.style.display="none"; return; } box.style.display="block";
+  const bad = items.filter(i => i.st === "miss" || i.st === "other"), sig = bad.map(i => i.sig).join(";");
+  const icon = {ok:"✓", other:"⚠", miss:"✗", neutral:"?"};
+  box.innerHTML = `<h4>数字核对（对照 UENO-KB-001〜005）：${items.length} 处 · <span style="color:var(--ok)">一致 ${items.filter(i=>i.st==="ok").length}</span> · <span style="color:var(--warn)">设施不符 ${items.filter(i=>i.st==="other").length}</span> · <span style="color:var(--bad)">知识库里没有 ${items.filter(i=>i.st==="miss").length}</span></h4>`
+    + (items.length ? items.map(i => `<div class="nr ${i.st}"><span class="ic">${icon[i.st]}</span><span class="v">${esc(i.raw)}</span><span class="ctx">…${esc(i.ctx)}…<span class="kb">${esc(i.note)}</span></span></div>`).join("") : `<div class="hint">草稿里没有金额或时间。</div>`)
+    + (bad.length ? `<label class="ack"><input type="checkbox" id="numAck" ${s.numAckSig===sig?"checked":""}> <span>我已逐一确认上面标 ⚠ / ✗ 的数字（合计、客人的时间等可以保留）</span></label>` : "");
+  const ack = document.getElementById("numAck");
+  if (ack) ack.onchange = () => { s.numAckSig = ack.checked ? sig : ""; persist(); };
+  NUM_BAD = sig;
+}
 
 /* ---------------- mascot launcher ---------------- */
 function openGBase(){
@@ -309,7 +376,7 @@ $("#copyPrompt").onclick=()=>copy(buildPrompt()).then(ok=>msg("#m-send",ok?"ok":
   const s=st(cur.id); s.draft=$("#draft").value; s.risk=$("#risk").value; s.reviewer=$("#reviewer").value; s.comment=$("#comment").value;
   if(sel==="#reviewer") save("mma-reviewer",s.reviewer);
   if(sel==="#draft" && s.draft && s.status==="new") s.status="drafting";
-  persist(); if(sel==="#draft") steps(s.draft?3:2); }));
+  persist(); if(sel==="#draft"){ steps(s.draft?3:2); renderNumcheck(); } }));
 $("#checks").addEventListener("change",e=>{ const k=e.target.dataset.k; if(!k) return; st(cur.id).checks[k]=e.target.checked; persist(); });
 $("#d-src-edit").addEventListener("input",()=>{ cur.body=$("#d-src-edit").value; save("mma-custom-v1",customs); });
 
@@ -317,6 +384,9 @@ $("#approve").onclick=()=>{
   const s=st(cur.id), probs=[];
   if(!s.draft.trim()) probs.push("审核栏还没有草稿");
   if(/\[要确认\]|［要确认］|\[要確認\]|［要確認］/.test(s.draft)) probs.push("草稿里还有 [要确认]");
+  if(/根拠\s*[:：]|根据\s*[:：]/.test(s.draft)) probs.push("正文里还有「根拠：…」（内部信息，发给客户前请删除）");
+  if(/x{3,}|ｘ{3,}/i.test(s.draft)) probs.push("草稿里有「xxxx」之类的占位符");
+  renderNumcheck(); if(NUM_BAD && s.numAckSig!==NUM_BAD) probs.push("数字核对里有 ⚠ / ✗ 的数字还没确认");
   if(!s.risk) probs.push("未选择风险等级");
   if(!s.reviewer.trim()) probs.push("未填写审核者");
   const miss=CHECKS[cur.kind].filter(([k])=>!s.checks[k]).map(([k])=>k); if(miss.length) probs.push("清单未勾选："+miss.join("、"));
