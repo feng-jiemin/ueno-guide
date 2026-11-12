@@ -68,6 +68,23 @@ th{color:var(--muted);font-weight:600;white-space:nowrap}
 td.final{max-width:360px;white-space:pre-wrap;font-size:12px;color:var(--muted)}
 .empty{color:var(--muted);padding:20px 0;text-align:center}
 .hint{font-size:12px;color:var(--muted)}
+
+/* mascot launcher (same as Ueno site; replaces the default GBase button) */
+#gptbase-bubble-button{opacity:0!important;pointer-events:none!important}
+#gptbase-message-bubbles{display:none!important}
+@media (min-width:640px){#gptbase-bubble-window{right:150px!important;bottom:20px!important;top:auto!important;max-height:calc(100dvh - 40px)!important}}
+.m-tip{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));z-index:999999991;width:min(260px,calc(100vw - 28px));background:#fff;color:#24203a;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6;box-shadow:0 10px 26px rgba(60,20,60,.22)}
+.mascot{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:999999990;border:0;background:none;padding:0;cursor:pointer;display:grid;justify-items:center;-webkit-tap-highlight-color:transparent}
+.mascot .m-img{width:118px;height:auto;display:block;filter:drop-shadow(0 6px 10px rgba(60,20,60,.25));animation:m-hop 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.mascot:hover .m-img{animation:m-hop .9s ease-in-out infinite}
+@keyframes m-hop{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-6px) rotate(-4deg)}40%{transform:translateY(0) rotate(0)}60%{transform:translateY(-4px) rotate(4deg)}80%{transform:translateY(0) rotate(0)}}
+.mascot .say{position:relative;background:#fff;color:#24203a;font-size:13px;font-weight:700;padding:7px 12px;border-radius:14px;box-shadow:0 6px 18px rgba(60,20,60,.18);white-space:nowrap;margin-bottom:2px;animation:say-pop 3.2s ease-in-out infinite}
+.mascot .say::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+@keyframes say-pop{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@media (max-width:640px){.mascot .m-img{width:86px}.mascot .say{font-size:12px;padding:5px 10px}}
+@media (prefers-reduced-motion:reduce){.mascot .m-img,.mascot .say{animation:none}}
+main{padding-bottom:190px}
+@media (min-width:900px){main,nav{padding-right:150px}}
 </style>
 </head>
 <body>
@@ -141,6 +158,11 @@ td.final{max-width:360px;white-space:pre-wrap;font-size:12px;color:var(--muted)}
   </section>
 </main>
 
+<button type="button" class="mascot" id="mascot" aria-label="GBase Agent を開く">
+  <span class="say">事務局アシスタントです！</span>
+  <img class="m-img" src="../img/mascot.png" width="428" height="486" alt="" onerror="this.onerror=null;this.src='https://feng-jiemin.github.io/ueno-guide/img/mascot.png'">
+</button>
+
 <script>
 /* ---------------- sample data (fictional) ---------------- */
 const ITEMS = [
@@ -207,6 +229,18 @@ function renderLog(){
   $("#logBody").innerHTML = log.slice().reverse().map(r=>`<tr><td>${esc(r.time)}</td><td>${r.kind==="mail"?"邮件":"会议"}</td><td>${esc(r.subject)}<br><small class="hint">${esc(r.itemId)}</small></td><td><span class="tag ${ {批准执行:"ok",退回重写:"bad",升级:"warn",发给GBase:"info"}[r.action]||""}">${esc(r.action)}</span>${r.to?`<br><small class="hint">→ ${esc(r.to)}</small>`:""}</td><td>${esc(r.risk)}</td><td>${esc(r.reviewer)}</td><td>${esc(r.comment)}</td><td class="final">${esc((r.final||"").slice(0,240))}${(r.final||"").length>240?"…":""}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">还没有记录</td></tr>`;
 }
 function renderAll(){ renderList(); renderDetail(); renderLog(); }
+
+/* ---------------- mascot launcher ---------------- */
+function openGBase(){
+  const b=document.getElementById("gptbase-bubble-button");
+  if(b){ b.click(); return true; }
+  let tip=document.getElementById("m-tip");
+  if(!tip){ tip=document.createElement("div"); tip.id="m-tip"; tip.className="m-tip"; tip.setAttribute("role","status"); document.body.appendChild(tip); }
+  tip.textContent="GBase Agent 正在加载，请稍后再点一次。（只在正式网站上可用）"; tip.hidden=false;
+  clearTimeout(openGBase.timer); openGBase.timer=setTimeout(()=>{ tip.hidden=true; },5000);
+  return false;
+}
+document.getElementById("mascot").addEventListener("click",openGBase);
 
 /* ---------------- GBase bridge (postMessage interface of plugin.js, same as Ueno demo) ---------------- */
 function sendToGBase(q){
