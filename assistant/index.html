@@ -72,7 +72,16 @@ td.final{max-width:360px;white-space:pre-wrap;font-size:12px;color:var(--muted)}
 /* mascot launcher (same as Ueno site; replaces the default GBase button) */
 #gptbase-bubble-button{opacity:0!important;pointer-events:none!important}
 #gptbase-message-bubbles{display:none!important}
-@media (min-width:640px){#gptbase-bubble-window{right:150px!important;bottom:20px!important;top:auto!important;max-height:calc(100dvh - 40px)!important}}
+@media (min-width:640px){#gptbase-bubble-window{left:auto!important;top:auto!important;right:var(--gb-r,150px)!important;bottom:var(--gb-b,20px)!important;width:var(--gb-w,380px)!important;height:var(--gb-h,min(600px,calc(100dvh - 60px)))!important;max-height:calc(100dvh - 40px)!important}}
+/* move bar + resize dot for the GBase window (desktop only) */
+.gb-bar{position:fixed;z-index:2147483646;height:24px;margin-top:-26px;display:flex;align-items:center;gap:6px;padding:0 6px 0 10px;border-radius:10px 10px 0 0;background:#7b5cd6;color:#fff;font-size:12px;cursor:move;touch-action:none;user-select:none;box-shadow:0 -2px 8px rgba(0,0,0,.15)}
+.gb-bar[hidden],.gb-size[hidden]{display:none}
+.gb-bar .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gb-bar button{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:6px;font:inherit;font-size:11px;padding:1px 7px;cursor:pointer}
+.gb-bar button:hover{background:rgba(255,255,255,.32)}
+.gb-size{position:fixed;z-index:2147483647;width:22px;height:22px;margin:-30px 0 0 -11px;border:2px solid #fff;border-radius:50%;background:#7b5cd6;cursor:nwse-resize;touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.gb-dragging #gptbase-bubble-window{pointer-events:none!important}
+.gb-dragging,.gb-dragging *{user-select:none!important}
 .m-tip{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));z-index:999999991;width:min(260px,calc(100vw - 28px));background:#fff;color:#24203a;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6;box-shadow:0 10px 26px rgba(60,20,60,.22)}
 .mascot{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:999999990;border:0;background:none;padding:0;cursor:pointer;display:grid;justify-items:center;-webkit-tap-highlight-color:transparent}
 .mascot .m-img{width:118px;height:auto;display:block;filter:drop-shadow(0 6px 10px rgba(60,20,60,.25));animation:m-hop 2.6s ease-in-out infinite;transform-origin:50% 100%}
@@ -348,6 +357,61 @@ $("#exportCsv").onclick=()=>{
 $("#clearLog").onclick=()=>{ if(!confirm("清空所有执行记录和处理状态？（建议先导出 CSV）")) return; log=[]; state={}; save(LS_LOG,log); save(LS_STATE,state); renderAll(); };
 
 cur=ITEMS[0]; renderAll();
+</script>
+
+
+<script>
+/* ---------- GBase window: drag the bar to move, drag the dot to resize (desktop ≥640px); saved per browser ---------- */
+(() => {
+  const KEY="mma-gb-geo", root=document.documentElement, MIN_W=320, MIN_H=360, TOP=34;
+  const bar=document.createElement("div"); bar.className="gb-bar"; bar.hidden=true; bar.tabIndex=0;
+  bar.title="拖动移动窗口（方向键也可以）；双击还原";
+  bar.innerHTML='<span class="t">⠿ 拖动这里移动窗口</span><button type="button" data-a="left">靠左</button><button type="button" data-a="right">靠右</button><button type="button" data-a="small">缩小</button><button type="button" data-a="reset">还原</button>';
+  const dot=document.createElement("div"); dot.className="gb-size"; dot.hidden=true; dot.title="拖动调整窗口大小";
+  document.body.append(bar, dot);
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  let geo=null, frame=null;   /* geo = {r,b,w,h} in px, null = default */
+  function apply(g, save){
+    const vw=innerWidth, vh=innerHeight;
+    g.w=clamp(Math.round(g.w),MIN_W,vw-16); g.h=clamp(Math.round(g.h),MIN_H,vh-TOP-8);
+    g.r=clamp(Math.round(g.r),0,vw-g.w); g.b=clamp(Math.round(g.b),0,vh-TOP-g.h);
+    geo=g; for(const k of ["r","b","w","h"]) root.style.setProperty("--gb-"+k, g[k]+"px");
+    if(save){ try{ localStorage.setItem(KEY,JSON.stringify(g)); }catch(e){} }
+    place();
+  }
+  function reset(){ geo=null; ["r","b","w","h"].forEach(k=>root.style.removeProperty("--gb-"+k)); try{ localStorage.removeItem(KEY); }catch(e){} place(); }
+  function cur(){ const r=frame.getBoundingClientRect(); return {r:innerWidth-r.right, b:innerHeight-r.bottom, w:r.width, h:r.height}; }
+  function place(){
+    const open=frame && frame.style.display!=="none" && innerWidth>=640;
+    bar.hidden=dot.hidden=!open; if(!open) return;
+    const r=frame.getBoundingClientRect();
+    bar.style.left=r.left+"px"; bar.style.top=r.top+"px"; bar.style.width=r.width+"px";
+    dot.style.left=r.left+"px"; dot.style.top=r.top+"px";
+  }
+  function hook(){
+    const f=document.getElementById("gptbase-bubble-window"); if(!f||f===frame) return; frame=f;
+    new MutationObserver(()=>requestAnimationFrame(place)).observe(f,{attributes:true,attributeFilter:["style"]}); place();
+  }
+  try{ const g=JSON.parse(localStorage.getItem(KEY)||"null"); if(g&&g.w) apply(g,false); }catch(e){}
+  new MutationObserver(hook).observe(document.body,{childList:true}); hook();
+  addEventListener("resize",()=>{ if(geo) apply({...geo},false); else place(); });
+  function drag(el, onMove){
+    let st=null;
+    el.addEventListener("pointerdown",e=>{ if(!frame||e.button||e.target.closest("button")) return; e.preventDefault(); el.setPointerCapture(e.pointerId); st={x:e.clientX,y:e.clientY,g:cur()}; root.classList.add("gb-dragging"); });
+    el.addEventListener("pointermove",e=>{ if(st) apply(onMove(st.g, e.clientX-st.x, e.clientY-st.y),false); });
+    const end=()=>{ if(!st) return; st=null; root.classList.remove("gb-dragging"); apply(cur(),true); };
+    el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
+  }
+  drag(bar,(g,dx,dy)=>({...g, r:g.r-dx, b:g.b-dy}));          /* move */
+  drag(dot,(g,dx,dy)=>({...g, w:g.w-dx, h:g.h-dy}));          /* resize from top-left corner */
+  bar.addEventListener("dblclick",e=>{ if(!e.target.closest("button")) reset(); });
+  bar.addEventListener("click",e=>{ const a=e.target.closest("button")?.dataset.a; if(!a||!frame) return; const g=cur();
+    if(a==="left") apply({...g, r:innerWidth-g.w-16},true);
+    if(a==="right") apply({...g, r:150},true);
+    if(a==="small") apply({...g, w:MIN_W, h:MIN_H+60},true);
+    if(a==="reset") reset(); });
+  bar.addEventListener("keydown",e=>{ const d={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:[0,-20],ArrowDown:[0,20]}[e.key]; if(!d||!frame) return; e.preventDefault(); const g=cur(); apply({...g, r:g.r-d[0], b:g.b-d[1]},true); });
+})();
 </script>
 
 <!-- ============================================================
