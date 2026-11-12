@@ -74,12 +74,12 @@ td.final{max-width:360px;white-space:pre-wrap;font-size:12px;color:var(--muted)}
 #gptbase-message-bubbles{display:none!important}
 @media (min-width:640px){#gptbase-bubble-window{left:auto!important;top:auto!important;right:var(--gb-r,150px)!important;bottom:var(--gb-b,20px)!important;width:var(--gb-w,380px)!important;height:var(--gb-h,min(600px,calc(100dvh - 60px)))!important;max-height:calc(100dvh - 40px)!important}}
 /* move bar + resize dot for the GBase window (desktop only) */
-.gb-bar{position:fixed;z-index:2147483646;height:24px;margin-top:-26px;display:flex;align-items:center;gap:6px;padding:0 6px 0 10px;border-radius:10px 10px 0 0;background:#7b5cd6;color:#fff;font-size:12px;cursor:move;touch-action:none;user-select:none;box-shadow:0 -2px 8px rgba(0,0,0,.15)}
+.gb-bar{position:fixed;z-index:2147483646;height:18px;margin-top:-18px;display:flex;align-items:center;justify-content:center;border-radius:12px 12px 0 0;background:#8a6be0;cursor:grab;touch-action:none;user-select:none;box-shadow:0 -2px 8px rgba(0,0,0,.12)}
+.gb-bar:active,.gb-dragging .gb-bar{cursor:grabbing}
+.gb-bar .grip{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.75)}
+.gb-bar:hover .grip{background:#fff}
 .gb-bar[hidden],.gb-size[hidden]{display:none}
-.gb-bar .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gb-bar button{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:6px;font:inherit;font-size:11px;padding:1px 7px;cursor:pointer}
-.gb-bar button:hover{background:rgba(255,255,255,.32)}
-.gb-size{position:fixed;z-index:2147483647;width:22px;height:22px;margin:-30px 0 0 -11px;border:2px solid #fff;border-radius:50%;background:#7b5cd6;cursor:nwse-resize;touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.gb-size{position:fixed;z-index:2147483647;width:18px;height:18px;margin:-27px 0 0 -9px;border:2px solid #fff;border-radius:50%;background:#7b5cd6;cursor:nwse-resize;touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .gb-dragging #gptbase-bubble-window{pointer-events:none!important}
 .gb-dragging,.gb-dragging *{user-select:none!important}
 .m-tip{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));z-index:999999991;width:min(260px,calc(100vw - 28px));background:#fff;color:#24203a;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6;box-shadow:0 10px 26px rgba(60,20,60,.22)}
@@ -365,8 +365,8 @@ cur=ITEMS[0]; renderAll();
 (() => {
   const KEY="mma-gb-geo", root=document.documentElement, MIN_W=320, MIN_H=360, TOP=34;
   const bar=document.createElement("div"); bar.className="gb-bar"; bar.hidden=true; bar.tabIndex=0;
-  bar.title="拖动移动窗口（方向键也可以）；双击还原";
-  bar.innerHTML='<span class="t">⠿ 拖动这里移动窗口</span><button type="button" data-a="left">靠左</button><button type="button" data-a="right">靠右</button><button type="button" data-a="small">缩小</button><button type="button" data-a="reset">还原</button>';
+  bar.title="拖动移动窗口　·　双击还原"; bar.setAttribute("aria-label","移动聊天窗口（方向键移动，双击还原）");
+  bar.innerHTML='<span class="grip"></span>';
   const dot=document.createElement("div"); dot.className="gb-size"; dot.hidden=true; dot.title="拖动调整窗口大小";
   document.body.append(bar, dot);
   const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
@@ -404,12 +404,8 @@ cur=ITEMS[0]; renderAll();
   }
   drag(bar,(g,dx,dy)=>({...g, r:g.r-dx, b:g.b-dy}));          /* move */
   drag(dot,(g,dx,dy)=>({...g, w:g.w-dx, h:g.h-dy}));          /* resize from top-left corner */
-  bar.addEventListener("dblclick",e=>{ if(!e.target.closest("button")) reset(); });
-  bar.addEventListener("click",e=>{ const a=e.target.closest("button")?.dataset.a; if(!a||!frame) return; const g=cur();
-    if(a==="left") apply({...g, r:innerWidth-g.w-16},true);
-    if(a==="right") apply({...g, r:150},true);
-    if(a==="small") apply({...g, w:MIN_W, h:MIN_H+60},true);
-    if(a==="reset") reset(); });
+  bar.addEventListener("dblclick",reset);
+  dot.addEventListener("dblclick",reset);
   bar.addEventListener("keydown",e=>{ const d={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:[0,-20],ArrowDown:[0,20]}[e.key]; if(!d||!frame) return; e.preventDefault(); const g=cur(); apply({...g, r:g.r-d[0], b:g.b-d[1]},true); });
 })();
 </script>
